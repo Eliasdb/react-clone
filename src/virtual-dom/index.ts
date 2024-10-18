@@ -6,26 +6,26 @@ export interface VNode {
 }
 
 // Create the VNode
-export function h(type: string, props: any, ...children: any[]) {
-    return {
-        type,
-        props: props || {},
-        children: children.flat(),
-    };
-}
+// export function h(type: string, props: any, ...children: any[]) {
+//     return {
+//         type,
+//         props: props || {},
+//         children: children.flat(),
+//     };
+// }
 
 export function template(
     strings: TemplateStringsArray,
     ...values: any[]
-): VNode {
-    const result: VNode = createVNode('div');
-
+): VNode[] {
+    // Change return type to VNode[]
     const combinedString = combineStrings(strings, values).trim();
     const div = createDivFromHTML(combinedString);
 
-    processChildNodes(div.childNodes, result.children);
+    const result: VNode[] = []; // Change result to an array of VNodes
+    processChildNodes(div.childNodes, result); // Populate the result directly with children
 
-    return result; // Return the final VNode structure
+    return result; // Return the array of VNodes
 }
 
 // Utility function to create a VNode

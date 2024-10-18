@@ -1,6 +1,6 @@
-// src/virtual-dom/render.ts
 import { VNode } from './index';
 
+// Type guard to check if a value is a text node
 function isTextNode(value: any): value is string | number | boolean {
     return (
         typeof value === 'string' ||
@@ -9,35 +9,62 @@ function isTextNode(value: any): value is string | number | boolean {
     );
 }
 
-export function render(
-    vnode: VNode | string | number | boolean,
+// Render a text node
+function renderTextNode(
+    value: string | number | boolean,
     container: HTMLElement
 ) {
-    if (isTextNode(vnode)) {
-        // Handle text nodes
-        container.appendChild(document.createTextNode(String(vnode)));
-        return; // Stop recursion
-    }
+    container.appendChild(document.createTextNode(String(value)));
+}
 
-    // Create a DOM element for the VNode
+// Render a VNode and its children
+function renderVNode(vnode: VNode, container: HTMLElement) {
     const domElement = document.createElement(vnode.type);
+    applyProps(vnode.props, domElement);
+    vnode.children.forEach((child) => renderChild(child, domElement));
+    container.appendChild(domElement);
+}
 
-    // Apply props
-    if (vnode.props) {
-        Object.keys(vnode.props).forEach((key) => {
-            // Handle event listeners
+// Apply props to a DOM element
+function applyProps(props: Record<string, any>, domElement: HTMLElement) {
+    if (props) {
+        Object.keys(props).forEach((key) => {
             if (key.startsWith('on')) {
                 const eventType = key.substring(2).toLowerCase();
-                domElement.addEventListener(eventType, vnode.props[key]);
+                domElement.addEventListener(eventType, props[key]);
             } else {
-                domElement.setAttribute(key, vnode.props[key]);
+                domElement.setAttribute(key, props[key]);
             }
         });
     }
+}
 
-    // Recursive step: render each child
-    vnode.children.forEach((child) => render(child, domElement));
+// Render a child node
+function renderChild(
+    child: VNode | string | number | boolean,
+    container: HTMLElement
+) {
+    if (isTextNode(child)) {
+        renderTextNode(child, container);
+    } else {
+        renderVNode(child as VNode, container);
+    }
+}
 
-    // Append the constructed DOM element to the container
-    container.appendChild(domElement);
+// Main render function
+export function render(
+    vnodes: VNode | VNode[] | string | number | boolean,
+    container: HTMLElement
+) {
+    if (isTextNode(vnodes)) {
+        renderTextNode(vnodes, container);
+        return;
+    }
+
+    if (Array.isArray(vnodes)) {
+        vnodes.forEach((vnode) => renderChild(vnode, container));
+        return;
+    }
+
+    renderVNode(vnodes as VNode, container);
 }
