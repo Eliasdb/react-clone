@@ -11,7 +11,6 @@ const App = () => {
         <h1>Welcome to My React-like Library!</h1>
         <p>This is a paragraph.</p>
         <button onClick=${handleClick}>Click Me!</button>
-
     </div>`;
 };
 

@@ -25,13 +25,23 @@ function renderVNode(vnode: VNode, container: HTMLElement) {
     container.appendChild(domElement);
 }
 
-// Apply props to a DOM element
 function applyProps(props: Record<string, any>, domElement: HTMLElement) {
     if (props) {
         Object.keys(props).forEach((key) => {
-            if (key.startsWith('on')) {
+            // Ignore lowercase 'onclick' or any other case issues
+            if (key.startsWith('on') && key !== 'onclick') {
                 const eventType = key.substring(2).toLowerCase();
-                domElement.addEventListener(eventType, props[key]);
+                const eventHandler = props[key];
+
+                if (typeof eventHandler === 'function') {
+                    domElement.addEventListener(eventType, eventHandler);
+                    console.log(`Event listener for ${eventType} attached.`);
+                } else {
+                    console.error(
+                        `Event handler for ${eventType} is not a function: `,
+                        eventHandler
+                    );
+                }
             } else {
                 domElement.setAttribute(key, props[key]);
             }
