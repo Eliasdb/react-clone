@@ -26,13 +26,15 @@ function renderVNode(vnode: VNode, container: HTMLElement) {
 }
 
 function applyProps(props: Record<string, any>, domElement: HTMLElement) {
+    console.log('Applying props:', props);
+
     if (props) {
         Object.keys(props).forEach((key) => {
-            // Ignore lowercase 'onclick' or any other case issues
-            if (key.startsWith('on') && key !== 'onclick') {
+            if (key.startsWith('on')) {
                 const eventType = key.substring(2).toLowerCase();
                 const eventHandler = props[key];
 
+                // Ensure that eventHandler is a function
                 if (typeof eventHandler === 'function') {
                     domElement.addEventListener(eventType, eventHandler);
                     console.log(`Event listener for ${eventType} attached.`);
@@ -43,6 +45,7 @@ function applyProps(props: Record<string, any>, domElement: HTMLElement) {
                     );
                 }
             } else {
+                // Only set attributes that are not event handlers
                 domElement.setAttribute(key, props[key]);
             }
         });

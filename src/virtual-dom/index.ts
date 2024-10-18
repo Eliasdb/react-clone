@@ -8,22 +8,21 @@ export interface VNode {
 export function template(
     strings: TemplateStringsArray,
     ...values: any[]
-): VNode {
-    const result: VNode = createVNode('div'); // Root VNode
-
-    // Combine strings and values
+): VNode | VNode[] {
+    // Create a temporary div to process the child nodes
     const combinedString = combineStringsAndValues(strings, values);
-
-    // Create a temporary div from the combined string
     const div = createDivFromHTML(combinedString);
 
+    const result: VNode[] = []; // Array to hold multiple VNodes
+
     // Process the child nodes of the div
-    processChildNodes(div.childNodes, result.children);
+    processChildNodes(div.childNodes, result);
 
     // Attach non-string values (e.g., functions for event handlers) to the VNode's props
-    attachPropsToVNode(result, values);
+    attachPropsToVNode(result[0], values); // Attach props to the first VNode if exists
 
-    return result;
+    // If there's only one VNode, return it directly; otherwise, return the array
+    return result.length === 1 ? result[0] : result;
 }
 
 // Combine strings and values, but keep non-string values intact
@@ -38,16 +37,12 @@ function combineStringsAndValues(
     );
 }
 
+// Attach non-string values (e.g., event handlers) to the VNode props
 function attachPropsToVNode(vnode: VNode, values: any[]) {
     values.forEach((value) => {
         if (typeof value === 'function') {
-            // Dynamically determine the event name and attach it to props
-            const eventName = value.name; // Assuming the function is named appropriately
-            const propName = `on${
-                eventName.charAt(0).toUpperCase() + eventName.slice(1)
-            }`;
-            vnode.props[propName] = value; // Attach dynamic event handler
-            console.log(`Attached event handler for ${propName}:`, value);
+            vnode.props['onClick'] = value; // Attach event handler to props
+            console.log('Attached event handler:', value); // Add this line
         }
     });
 }
@@ -59,11 +54,6 @@ function createVNode(type: string): VNode {
         props: {},
         children: [],
     };
-}
-
-// Utility function to combine string parts and values
-function combineStrings(strings: TemplateStringsArray, values: any[]): string {
-    return strings.reduce((acc, str, i) => acc + str + (values[i] || ''), '');
 }
 
 // Create a div element from an HTML string
