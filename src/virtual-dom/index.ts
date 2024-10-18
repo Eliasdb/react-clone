@@ -5,15 +5,6 @@ export interface VNode {
     children: (VNode | string | number | boolean)[]; // Children can be other VNodes or primitive values
 }
 
-// Create the VNode
-// export function h(type: string, props: any, ...children: any[]) {
-//     return {
-//         type,
-//         props: props || {},
-//         children: children.flat(),
-//     };
-// }
-
 export function template(
     strings: TemplateStringsArray,
     ...values: any[]
