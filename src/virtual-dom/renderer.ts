@@ -1,13 +1,14 @@
-import { VNode, isVNode } from './vnode';
-import { isTextNode, isValidHtmlAttribute } from './utils';
+// src/virtual-dom/renderer.ts
+
+import { VNode, isVNode, ComponentFunction, Child } from './vnode';
+import { isTextNode } from './utils';
 import { resetHooks } from './hooks';
 
 export function render(
-  vnode: VNode | Function | string | number | boolean,
+  vnode: VNode | ComponentFunction | string | number | boolean,
   container: HTMLElement,
 ): void {
   if (typeof vnode === 'function') {
-    // Treat as a component
     renderComponent(vnode, container);
   } else if (isVNode(vnode)) {
     renderVNode(vnode, container);
@@ -17,7 +18,7 @@ export function render(
 }
 
 function renderComponent(
-  componentFunc: Function,
+  componentFunc: ComponentFunction,
   container: HTMLElement,
   props: any = {},
 ): void {
@@ -26,7 +27,6 @@ function renderComponent(
   const vnode = componentFunc(props);
 
   if (container.firstChild) {
-    // Update existing content
     container.innerHTML = '';
   }
 
@@ -39,8 +39,7 @@ function renderVNode(vnode: VNode, container: HTMLElement): void {
 
   vnode.children.forEach((child) => {
     if (typeof child === 'function') {
-      // Child is a component function
-      renderComponent(child, domElement, child.props || {});
+      renderComponent(child, domElement);
     } else if (isVNode(child)) {
       renderVNode(child, domElement);
     } else if (isTextNode(child)) {
@@ -56,8 +55,8 @@ function applyProps(domElement: HTMLElement, props: Record<string, any>): void {
     if (key.startsWith('on') && typeof value === 'function') {
       const eventType = key.substring(2).toLowerCase();
       domElement.addEventListener(eventType, value);
-    } else if (isValidHtmlAttribute(key)) {
-      domElement.setAttribute(key, value);
+    } else {
+      domElement.setAttribute(key, String(value));
     }
   });
 }

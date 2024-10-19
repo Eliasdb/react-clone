@@ -1,6 +1,6 @@
 // src/virtual-dom/template.ts
 
-import { VNode, createVNode, isVNode } from './vnode';
+import { Child, VNode, createVNode, isVNode } from './vnode';
 import { isTextNode } from './utils';
 
 export function template(
@@ -48,7 +48,9 @@ function processChildNodes(
   });
 }
 
-function processTextNode(node: Text, children: any[], values: any[]): void {
+// src/virtual-dom/template.ts
+
+function processTextNode(node: Text, children: Child[], values: any[]): void {
   const textContent = node.textContent || '';
   const parts = splitByPlaceholders(textContent);
 
@@ -62,7 +64,7 @@ function processTextNode(node: Text, children: any[], values: any[]): void {
       // Placeholder value
       const value = values[parseInt(part, 10)];
       if (typeof value === 'function') {
-        // Value is a component function with props
+        // Value is a component function
         children.push(value);
       } else if (isVNode(value)) {
         children.push(value);

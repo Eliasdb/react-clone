@@ -1,4 +1,8 @@
-type Child = VNode | string | number | boolean;
+// src/virtual-dom/vnode.ts
+
+export type ComponentFunction = (props?: any) => VNode;
+
+export type Child = VNode | string | number | boolean | ComponentFunction;
 
 export interface VNode {
   type: string;
@@ -17,6 +21,7 @@ export function createVNode(
     children,
   };
 }
+
 export function isVNode(value: any): value is VNode {
   return (
     value &&
