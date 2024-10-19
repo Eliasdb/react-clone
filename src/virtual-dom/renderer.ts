@@ -1,19 +1,36 @@
-// src/virtual-dom/renderer.ts
-
 import { VNode, isVNode } from './vnode';
 import { isTextNode, isValidHtmlAttribute } from './utils';
+import { resetHooks } from './hooks';
 
 export function render(
-  vnodes: VNode | VNode[] | string | number | boolean,
+  vnode: VNode | Function | string | number | boolean,
   container: HTMLElement,
 ): void {
-  if (isTextNode(vnodes)) {
-    renderTextNode(vnodes, container);
-  } else if (Array.isArray(vnodes)) {
-    vnodes.forEach((vnode) => renderVNode(vnode, container));
-  } else if (isVNode(vnodes)) {
-    renderVNode(vnodes, container);
+  if (typeof vnode === 'function') {
+    // Treat as a component
+    renderComponent(vnode, container);
+  } else if (isVNode(vnode)) {
+    renderVNode(vnode, container);
+  } else if (isTextNode(vnode)) {
+    renderTextNode(vnode, container);
   }
+}
+
+function renderComponent(
+  componentFunc: Function,
+  container: HTMLElement,
+  props: any = {},
+): void {
+  resetHooks();
+
+  const vnode = componentFunc(props);
+
+  if (container.firstChild) {
+    // Update existing content
+    container.innerHTML = '';
+  }
+
+  render(vnode, container);
 }
 
 function renderVNode(vnode: VNode, container: HTMLElement): void {
@@ -21,7 +38,10 @@ function renderVNode(vnode: VNode, container: HTMLElement): void {
   applyProps(domElement, vnode.props);
 
   vnode.children.forEach((child) => {
-    if (isVNode(child)) {
+    if (typeof child === 'function') {
+      // Child is a component function
+      renderComponent(child, domElement, child.props || {});
+    } else if (isVNode(child)) {
       renderVNode(child, domElement);
     } else if (isTextNode(child)) {
       renderTextNode(child, domElement);

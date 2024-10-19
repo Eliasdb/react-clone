@@ -6,14 +6,14 @@ import { isTextNode } from './utils';
 export function template(
   strings: TemplateStringsArray,
   ...values: any[]
-): VNode | VNode[] {
+): VNode {
   const combinedString = combineStringsAndValues(strings, values);
   const container = createContainerFromHTML(combinedString);
   const result: VNode[] = [];
 
   processChildNodes(container.childNodes, result, values);
 
-  return result.length === 1 ? result[0] : result;
+  return result.length === 1 ? result[0] : createVNode('div', {}, result);
 }
 
 // Combine strings and values with placeholders
@@ -61,7 +61,10 @@ function processTextNode(node: Text, children: any[], values: any[]): void {
     } else {
       // Placeholder value
       const value = values[parseInt(part, 10)];
-      if (isVNode(value)) {
+      if (typeof value === 'function') {
+        // Value is a component function with props
+        children.push(value);
+      } else if (isVNode(value)) {
         children.push(value);
       } else if (isTextNode(value)) {
         children.push(String(value));

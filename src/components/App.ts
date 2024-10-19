@@ -1,22 +1,28 @@
-import { template } from '../virtual-dom';
+// src/components/App.ts
+
+import { template } from '../virtual-dom/template';
 import MyComponent from './TestComponent';
+import { useState } from '../virtual-dom/hooks';
 
 const App = () => {
+  const [count, setCount] = useState(0);
+
   const handleClick = () => {
-    alert('yo');
+    setCount((prev) => prev + 1);
   };
 
   const handleClick2 = () => {
-    alert('yo2');
+    setCount((prev) => prev - 1);
   };
 
   return template`
     <div class="test">
       <h1>Welcome to My App!</h1>
-      <button onClick=${handleClick}>click</button>
-      <button onClick=${handleClick2}>click</button>
+      <p>Count: ${count}</p>
+      <button onClick=${handleClick}>Increment</button>
+       <button onClick=${handleClick2}>Decrement</button>
 
-      ${MyComponent()}  <!-- Insert the VNode here -->
+      ${MyComponent({ count })}
     </div>
   `;
 };

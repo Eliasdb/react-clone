@@ -1,17 +1,22 @@
+type Child = VNode | string | number | boolean;
+
 export interface VNode {
   type: string;
   props: Record<string, any>;
-  children: Array<VNode | string | number | boolean>;
+  children: Child[];
 }
 
-export function createVNode(type: string): VNode {
+export function createVNode(
+  type: string,
+  props: Record<string, any> = {},
+  children: Child[] = [],
+): VNode {
   return {
     type,
-    props: {},
-    children: [],
+    props,
+    children,
   };
 }
-
 export function isVNode(value: any): value is VNode {
   return (
     value &&
