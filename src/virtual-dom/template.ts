@@ -21,9 +21,11 @@ function combineStringsAndValues(
   strings: TemplateStringsArray,
   values: any[],
 ): string {
-  return strings.reduce((acc, str, i) => {
-    return acc + str + (i < values.length ? `__PLACEHOLDER__${i}__` : '');
-  }, '');
+  return strings.reduce(
+    (acc, str, i) =>
+      acc + str + (i < values.length ? `__PLACEHOLDER__${i}__` : ''),
+    '',
+  );
 }
 
 // Create a temporary container from an HTML string
@@ -36,7 +38,7 @@ function createContainerFromHTML(html: string): HTMLElement {
 // Process child nodes and populate the VNode tree
 function processChildNodes(
   childNodes: NodeListOf<ChildNode>,
-  children: any[],
+  children: Child[],
   values: any[],
 ): void {
   childNodes.forEach((node) => {
@@ -53,21 +55,21 @@ function processTextNode(node: Text, children: Child[], values: any[]): void {
   const parts = splitByPlaceholders(textContent);
 
   parts.forEach((part, index) => {
-    if (index % 2 === 0) {
-      // Regular text
-      if (part !== '') {
-        // Check if part is not empty
-        children.push(part); // Push without trimming
-      }
-    } else {
-      // Placeholder value
+    if (index % 2 === 0 && part !== '') {
+      // Add regular text directly
+      children.push(part);
+    } else if (index % 2 === 1) {
       const value = values[parseInt(part, 10)];
       if (typeof value === 'function') {
-        // Treat as a separate component
-        children.push(value); // Pass the component function directly
+        children.push(value);
       } else if (isVNode(value)) {
         children.push(value);
-      } else if (isTextNode(value)) {
+      } else if (
+        isTextNode(value) ||
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'boolean'
+      ) {
         children.push(String(value));
       }
     }
@@ -76,12 +78,11 @@ function processTextNode(node: Text, children: Child[], values: any[]): void {
 
 function processElementNode(
   element: HTMLElement,
-  children: any[],
+  children: Child[],
   values: any[],
 ): void {
   const vNode = createVNode(element.tagName.toLowerCase());
   addElementAttributes(element, vNode, values);
-
   processChildNodes(element.childNodes, vNode.children, values);
   children.push(vNode);
 }
@@ -95,30 +96,38 @@ function addElementAttributes(
     const { name, value } = attr;
     const parts = splitByPlaceholders(value);
 
-    let hasPlaceholder = false;
-    let newValue = '';
+    let finalValue = '';
     let eventHandler: Function | undefined;
+    let hasDynamicValue = false;
 
     parts.forEach((part, index) => {
       if (index % 2 === 0) {
-        newValue += part;
+        finalValue += part;
       } else {
-        hasPlaceholder = true;
+        hasDynamicValue = true;
         const placeholderValue = values[parseInt(part, 10)];
 
         if (typeof placeholderValue === 'function' && name.startsWith('on')) {
           eventHandler = placeholderValue;
-        } else if (isTextNode(placeholderValue)) {
-          newValue += String(placeholderValue);
+        } else if (
+          isTextNode(placeholderValue) ||
+          typeof placeholderValue === 'string' ||
+          typeof placeholderValue === 'number' ||
+          typeof placeholderValue === 'boolean'
+        ) {
+          finalValue += String(placeholderValue);
         }
       }
     });
 
     if (eventHandler) {
+      // Add event handler directly to props
       vNode.props[name] = eventHandler;
-    } else if (hasPlaceholder) {
-      vNode.props[name] = newValue;
+    } else if (hasDynamicValue) {
+      // Only override the attribute if it contains a placeholder
+      vNode.props[name] = finalValue;
     } else {
+      // Otherwise, keep the static attribute value as is
       vNode.props[name] = value;
     }
   });

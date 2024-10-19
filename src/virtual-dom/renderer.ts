@@ -3,6 +3,7 @@
 import { VNode, isVNode, ComponentFunction, Child } from './vnode';
 import { isTextNode } from './utils';
 import { resetHooks, setCurrentInstance, getCurrentInstance } from './hooks';
+import { applyProps } from './applyProps';
 
 export interface ComponentInstance {
   componentFunc: ComponentFunction;
@@ -215,21 +216,6 @@ function renderVNode(vnode: VNode, container: HTMLElement): void {
 }
 
 // src/virtual-dom/renderer.ts
-
-function applyProps(domElement: HTMLElement, props: Record<string, any>): void {
-  Object.entries(props).forEach(([key, value]) => {
-    if (key.startsWith('on') && typeof value === 'function') {
-      const eventType = key.substring(2).toLowerCase();
-      domElement.addEventListener(eventType, value);
-    } else if (key === 'value' && domElement instanceof HTMLInputElement) {
-      if (domElement.value !== value) {
-        domElement.value = value;
-      }
-    } else {
-      domElement.setAttribute(key, String(value));
-    }
-  });
-}
 
 function renderTextNode(
   value: string | number | boolean,

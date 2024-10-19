@@ -21,7 +21,8 @@ const MyComponent = ({
   const handleClick2 = () => {
     setCount((prev) => prev - 1);
   };
-  console.log('MyComponent is rendering');
+
+  console.log('rerender');
 
   return template`
     <div>

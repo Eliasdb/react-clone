@@ -11,7 +11,7 @@ const myComponentProps = {
 };
 
 const App = () => {
-  console.log('App component is rendering');
+  console.log('rerender pp');
 
   return template`
     <div class="test">

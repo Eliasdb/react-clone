@@ -17,13 +17,11 @@ const FormComponent = () => {
     setInputValue('');
   };
 
-  console.log('FormComponent is rendering');
-
   return template`
     <form onSubmit=${handleSubmit}>
       <label>
         Enter something:
-        <input type="text" value=${inputValue} onInput=${handleInput} />
+        <input type="text" value=${inputValue} placeholder="hi" onInput=${handleInput} />
       </label>
       <button type="submit">Submit</button>
     </form>

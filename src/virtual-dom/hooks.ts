@@ -32,33 +32,33 @@ export function useState<S>(initialState: S): [S, StateUpdater<S>] {
     throw new Error('useState must be called within a component');
   }
 
-  const instanceForUpdater = instance;
+  const { hooks, hookIndex } = instance;
 
-  const hooks = instance.hooks;
-  const hookIndex = instance.hookIndex++;
-
+  // Initialize the hook if it does not exist
   if (!hooks[hookIndex]) {
-    const updater: StateUpdater<S> = (newState) => {
-      const hook = hooks[hookIndex];
-      const nextState =
-        typeof newState === 'function'
-          ? (newState as (prevState: S) => S)(hook.state)
-          : newState;
-
-      if (nextState !== hook.state) {
-        hook.state = nextState;
-        // Trigger re-render of this component instance
-        scheduleUpdate(instanceForUpdater);
-      }
-    };
-
-    const hook: Hook<S> = {
-      state: initialState,
-      updater,
-    };
-
-    hooks[hookIndex] = hook;
+    hooks[hookIndex] = createHook(initialState, instance);
   }
 
-  return [hooks[hookIndex].state, hooks[hookIndex].updater];
+  // Increment hook index for the next hook call
+  instance.hookIndex++;
+
+  const hook = hooks[hookIndex] as Hook<S>;
+  return [hook.state, hook.updater];
+}
+
+function createHook<S>(initialState: S, instance: ComponentInstance): Hook<S> {
+  const updater: StateUpdater<S> = (newState) => {
+    const hook = instance.hooks[instance.hookIndex - 1] as Hook<S>;
+    const nextState =
+      typeof newState === 'function'
+        ? (newState as (prevState: S) => S)(hook.state)
+        : newState;
+
+    if (nextState !== hook.state) {
+      hook.state = nextState;
+      scheduleUpdate(instance);
+    }
+  };
+
+  return { state: initialState, updater };
 }
