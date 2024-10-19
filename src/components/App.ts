@@ -17,7 +17,7 @@ const App = () => {
     <div class="test">
       <h1>Welcome to My App!</h1>
          ${withProps(MyComponent, myComponentProps)} 
-      ${FormComponent} <!-- Include the FormComponent as a reference -->
+        ${FormComponent} 
 
     </div>
   `;

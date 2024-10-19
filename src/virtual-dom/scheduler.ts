@@ -1,6 +1,7 @@
 // src/virtual-dom/scheduler.ts
 
-import { ComponentInstance, renderComponent } from './renderer';
+import { ComponentInstance, renderToDom } from './renderer';
+import { getCurrentInstance, setCurrentInstance, resetHooks } from './hooks';
 
 let isScheduled = false;
 const updateQueue: Set<ComponentInstance> = new Set();
@@ -16,12 +17,23 @@ export function scheduleUpdate(instance: ComponentInstance) {
 
 function flushUpdates() {
   updateQueue.forEach((instance) => {
-    const { componentFunc, dom, props } = instance;
-    const parentDom =
-      dom && dom.parentNode
-        ? (dom.parentNode as HTMLElement)
-        : instance.parentDom;
-    renderComponent(componentFunc, parentDom, props, instance);
+    const { componentFunc, parentDom, props } = instance;
+
+    const previousInstance = getCurrentInstance();
+    setCurrentInstance(instance);
+    resetHooks();
+
+    const vnode = componentFunc(props);
+
+    const newDom = renderToDom(vnode, parentDom);
+
+    setCurrentInstance(previousInstance);
+
+    if (instance.dom && instance.dom.parentNode) {
+      instance.dom.parentNode.replaceChild(newDom, instance.dom);
+    }
+
+    instance.dom = newDom;
   });
   updateQueue.clear();
   isScheduled = false;

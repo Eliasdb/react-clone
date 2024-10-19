@@ -151,7 +151,7 @@ function updateElement(dom: HTMLElement | Text, newVnode: Child): void {
   }
 }
 
-function renderToDom(
+export function renderToDom(
   vnode: Child,
   parentDom: HTMLElement | null = null,
 ): HTMLElement | Text {
