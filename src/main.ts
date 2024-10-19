@@ -1,12 +1,11 @@
-// src/index.ts
-import App from './components/App'; // Import your App component
+import App from './components/App';
 import './style.css';
-import { render } from './virtual-dom/render'; // Import your render function
 
-// Render the App component to the DOM
+import { render } from './virtual-dom';
+
 const root = document.getElementById('app');
+
 if (root) {
-  const appVNode = App(); // Get VNode from App
-  console.log('Final App VNode:', appVNode); // Check the VNode before rendering
-  render(appVNode, root); // Render the VNode to the DOM
+  const appVNode = App();
+  render(appVNode, root);
 }

@@ -5,10 +5,17 @@ const App = () => {
   const handleClick = () => {
     alert('yo');
   };
+
+  const handleClick2 = () => {
+    alert('yo2');
+  };
+
   return template`
-    <div>
+    <div class="test">
       <h1>Welcome to My App!</h1>
       <button onClick=${handleClick}>click</button>
+      <button onClick=${handleClick2}>click</button>
+
       ${MyComponent()}  <!-- Insert the VNode here -->
     </div>
   `;
