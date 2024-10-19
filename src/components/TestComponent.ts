@@ -3,8 +3,16 @@
 import { useState } from '../virtual-dom/hooks';
 import { template } from '../virtual-dom/template';
 
-const MyComponent = () => {
-  const [count, setCount] = useState(0);
+interface MyComponentProps {
+  initialCount?: number;
+  label?: string;
+}
+
+const MyComponent = ({
+  initialCount = 0,
+  label = 'Count',
+}: MyComponentProps) => {
+  const [count, setCount] = useState(initialCount);
 
   const handleClick = () => {
     setCount((prev) => prev + 1);
@@ -17,10 +25,9 @@ const MyComponent = () => {
 
   return template`
     <div>
-      <h2>Count from App: ${count}</h2>
-      <button onClick=${handleClick}>click</button>
-            <button onClick=${handleClick2}>click</button>
-
+      <h2>${label}: ${count}</h2>
+      <button onClick=${handleClick}>Increment</button>
+      <button onClick=${handleClick2}>Decrement</button>
     </div>
   `;
 };

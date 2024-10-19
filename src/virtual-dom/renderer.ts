@@ -4,6 +4,36 @@ import { VNode, isVNode, ComponentFunction, Child } from './vnode';
 import { isTextNode } from './utils';
 import { resetHooks, setCurrentInstance, getCurrentInstance } from './hooks';
 
+export interface ComponentInstance {
+  componentFunc: ComponentFunction;
+  props: any;
+  hooks: any[];
+  hookIndex: number;
+  dom: HTMLElement | Text | null;
+  parentDom: HTMLElement;
+}
+
+const instances: ComponentInstance[] = []; // Global instances array
+
+/**
+ * Finds an existing component instance based on the component function and parent container.
+ * @param componentFunc - The component function to search for.
+ * @param container - The parent DOM container.
+ * @returns The matching ComponentInstance or null if not found.
+ */
+function findExistingInstance(
+  componentFunc: ComponentFunction,
+  container: HTMLElement,
+): ComponentInstance | null {
+  return (
+    instances.find(
+      (instance) =>
+        instance.componentFunc === componentFunc &&
+        instance.parentDom === container,
+    ) || null
+  );
+}
+
 export function render(
   vnode: VNode | ComponentFunction | string | number | boolean,
   container: HTMLElement,
@@ -28,12 +58,15 @@ export interface ComponentInstance {
 
 // src/virtual-dom/renderer.ts
 
+// src/virtual-dom/renderer.ts
+
 export function renderComponent(
   componentFunc: ComponentFunction,
   container: HTMLElement,
   props: any = {},
-  instance?: ComponentInstance,
 ): HTMLElement | Text {
+  let instance = findExistingInstance(componentFunc, container);
+
   if (!instance) {
     instance = {
       componentFunc,
@@ -43,33 +76,79 @@ export function renderComponent(
       dom: null,
       parentDom: container,
     };
+    instances.push(instance);
   } else {
-    // Update instance's parentDom to the new container
-    instance.parentDom = container;
+    instance.props = props;
   }
 
   const previousInstance = getCurrentInstance();
   setCurrentInstance(instance);
   resetHooks();
 
-  const vnode = componentFunc(props);
-
-  // Pass the container as parentDom
-  const dom = renderToDom(vnode, container);
+  const vnodeRendered = componentFunc(props);
 
   setCurrentInstance(previousInstance);
 
-  if (instance.dom && instance.dom.parentNode) {
-    // Update existing DOM
-    instance.dom.parentNode.replaceChild(dom, instance.dom);
-    instance.dom = dom; // Update the instance's dom reference
+  if (instance.dom) {
+    // Update existing DOM node's properties
+    updateElement(instance.dom, vnodeRendered);
+    return instance.dom;
   } else {
     // Initial render
+    const dom = renderToDom(vnodeRendered, container);
     instance.dom = dom;
     container.appendChild(dom);
+    return dom;
   }
+}
 
-  return dom;
+/**
+ * Updates an existing DOM element based on the new VNode.
+ * @param dom - The existing DOM element.
+ * @param newVnode - The new VNode to update the DOM with.
+ */
+function updateElement(dom: HTMLElement | Text, newVnode: Child): void {
+  if (
+    typeof newVnode === 'string' ||
+    typeof newVnode === 'number' ||
+    typeof newVnode === 'boolean'
+  ) {
+    if (dom.textContent !== String(newVnode)) {
+      dom.textContent = String(newVnode);
+    }
+  } else if (typeof newVnode === 'function') {
+    // Handle component functions if needed
+    // For simplicity, we're not handling nested components here
+  } else if (isVNode(newVnode)) {
+    if (dom.nodeName.toLowerCase() !== newVnode.type) {
+      const newDom = renderToDom(newVnode, dom.parentElement);
+      dom.parentElement?.replaceChild(newDom, dom);
+    } else {
+      // Update attributes
+      applyProps(dom as HTMLElement, newVnode.props);
+
+      // Recursively update children
+      const children = newVnode.children;
+      const domChildren = dom.childNodes;
+
+      for (let i = 0; i < children.length; i++) {
+        const childVnode = children[i];
+        const childDom = domChildren[i];
+
+        if (childDom) {
+          updateElement(childDom as HTMLElement | Text, childVnode);
+        } else {
+          const newChildDom = renderToDom(childVnode, dom as HTMLElement);
+          dom.appendChild(newChildDom);
+        }
+      }
+
+      // Remove any extra DOM children
+      while (domChildren.length > children.length) {
+        dom.removeChild(domChildren[children.length]);
+      }
+    }
+  }
 }
 
 function renderToDom(
@@ -135,11 +214,17 @@ function renderVNode(vnode: VNode, container: HTMLElement): void {
   container.appendChild(domElement);
 }
 
+// src/virtual-dom/renderer.ts
+
 function applyProps(domElement: HTMLElement, props: Record<string, any>): void {
   Object.entries(props).forEach(([key, value]) => {
     if (key.startsWith('on') && typeof value === 'function') {
       const eventType = key.substring(2).toLowerCase();
       domElement.addEventListener(eventType, value);
+    } else if (key === 'value' && domElement instanceof HTMLInputElement) {
+      if (domElement.value !== value) {
+        domElement.value = value;
+      }
     } else {
       domElement.setAttribute(key, String(value));
     }

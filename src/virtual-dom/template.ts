@@ -48,8 +48,6 @@ function processChildNodes(
   });
 }
 
-// src/virtual-dom/template.ts
-
 function processTextNode(node: Text, children: Child[], values: any[]): void {
   const textContent = node.textContent || '';
   const parts = splitByPlaceholders(textContent);
@@ -57,15 +55,16 @@ function processTextNode(node: Text, children: Child[], values: any[]): void {
   parts.forEach((part, index) => {
     if (index % 2 === 0) {
       // Regular text
-      if (part.trim()) {
-        children.push(part.trim());
+      if (part !== '') {
+        // Check if part is not empty
+        children.push(part); // Push without trimming
       }
     } else {
       // Placeholder value
       const value = values[parseInt(part, 10)];
       if (typeof value === 'function') {
-        // Value is a component function
-        children.push(value);
+        // Treat as a separate component
+        children.push(value); // Pass the component function directly
       } else if (isVNode(value)) {
         children.push(value);
       } else if (isTextNode(value)) {
