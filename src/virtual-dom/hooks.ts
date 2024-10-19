@@ -1,5 +1,6 @@
 // src/virtual-dom/hooks.ts
 
+import { ComponentInstance } from './renderer';
 import { scheduleUpdate } from './scheduler';
 
 type StateUpdater<S> = (newState: S | ((prevState: S) => S)) => void;
@@ -9,19 +10,36 @@ interface Hook<S> {
   updater: StateUpdater<S>;
 }
 
-let hooks: Hook<any>[] = [];
-let hookIndex = 0;
+let currentInstance: ComponentInstance | null = null;
+
+export function setCurrentInstance(instance: ComponentInstance | null) {
+  currentInstance = instance;
+}
+
+export function getCurrentInstance(): ComponentInstance | null {
+  return currentInstance;
+}
 
 export function resetHooks() {
-  hookIndex = 0;
+  if (currentInstance) {
+    currentInstance.hookIndex = 0;
+  }
 }
 
 export function useState<S>(initialState: S): [S, StateUpdater<S>] {
-  const currentIndex = hookIndex++;
+  const instance = getCurrentInstance();
+  if (!instance) {
+    throw new Error('useState must be called within a component');
+  }
 
-  if (!hooks[currentIndex]) {
+  const instanceForUpdater = instance;
+
+  const hooks = instance.hooks;
+  const hookIndex = instance.hookIndex++;
+
+  if (!hooks[hookIndex]) {
     const updater: StateUpdater<S> = (newState) => {
-      const hook = hooks[currentIndex];
+      const hook = hooks[hookIndex];
       const nextState =
         typeof newState === 'function'
           ? (newState as (prevState: S) => S)(hook.state)
@@ -29,8 +47,8 @@ export function useState<S>(initialState: S): [S, StateUpdater<S>] {
 
       if (nextState !== hook.state) {
         hook.state = nextState;
-        // Trigger re-render
-        scheduleUpdate();
+        // Trigger re-render of this component instance
+        scheduleUpdate(instanceForUpdater);
       }
     };
 
@@ -39,8 +57,8 @@ export function useState<S>(initialState: S): [S, StateUpdater<S>] {
       updater,
     };
 
-    hooks[currentIndex] = hook;
+    hooks[hookIndex] = hook;
   }
 
-  return [hooks[currentIndex].state, hooks[currentIndex].updater];
+  return [hooks[hookIndex].state, hooks[hookIndex].updater];
 }

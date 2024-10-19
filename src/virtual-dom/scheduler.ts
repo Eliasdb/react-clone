@@ -1,22 +1,28 @@
 // src/virtual-dom/scheduler.ts
 
-import { render } from './renderer';
+import { ComponentInstance, renderComponent } from './renderer';
 
 let isScheduled = false;
-let rootVNode: any;
-let rootContainer: HTMLElement;
+const updateQueue: Set<ComponentInstance> = new Set();
 
-export function scheduleUpdate() {
+export function scheduleUpdate(instance: ComponentInstance) {
+  updateQueue.add(instance);
+
   if (!isScheduled) {
     isScheduled = true;
-    Promise.resolve().then(() => {
-      isScheduled = false;
-      render(rootVNode, rootContainer);
-    });
+    Promise.resolve().then(flushUpdates);
   }
 }
 
-export function setRoot(vnode: any, container: HTMLElement) {
-  rootVNode = vnode;
-  rootContainer = container;
+function flushUpdates() {
+  updateQueue.forEach((instance) => {
+    const { componentFunc, dom, props } = instance;
+    const parentDom =
+      dom && dom.parentNode
+        ? (dom.parentNode as HTMLElement)
+        : instance.parentDom;
+    renderComponent(componentFunc, parentDom, props, instance);
+  });
+  updateQueue.clear();
+  isScheduled = false;
 }
