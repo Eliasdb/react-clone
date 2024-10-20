@@ -19,6 +19,8 @@ const eventListenersMap = new WeakMap<
   Partial<Record<keyof HTMLElementEventMap, EventListener>>
 >();
 
+// src/virtual-dom/applyProps.ts
+
 export function applyProps(
   domElement: HTMLElement,
   props: Record<string, any>,
@@ -28,12 +30,22 @@ export function applyProps(
 
   Object.entries(props).forEach(([key, value]) => {
     if (key.startsWith('on') && typeof value === 'function') {
+      console.log(
+        `Adding/updating event listener '${key}' on ${domElement.tagName}`,
+      );
       handleEventListeners(domElement, key, value, listeners);
     } else if (key === 'value' && domElement instanceof HTMLInputElement) {
+      console.log(`Updating 'value' of <input> to '${value}'`);
       updateInputValue(domElement, value);
     } else if (key === 'style' && typeof value === 'object') {
+      console.log(
+        `Applying styles to ${domElement.tagName}: ${JSON.stringify(value)}`,
+      );
       Object.assign(domElement.style, value);
     } else {
+      console.log(
+        `Setting attribute '${key}' to '${value}' on ${domElement.tagName}`,
+      );
       updateAttribute(domElement, key, value);
     }
   });

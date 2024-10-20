@@ -7,15 +7,17 @@ import { applyProps } from './applyProps';
 import { diff, scheduleUpdate } from './scheduler';
 
 // src/virtual-dom/renderer.ts
+let instanceCounter = 0; // Initialize a counter for unique IDs
 
 export interface ComponentInstance {
-  componentFunc: ComponentFunction;
-  props: any;
+  id: string; // Made required and of type string
+  componentFunc: ComponentFunction; // Changed from Function to ComponentFunction
+  props: any; // Ensure props are always present
   hooks: any[];
   hookIndex: number;
   dom: HTMLElement | Text | null;
-  parentDom: HTMLElement;
-  previousVNode: VNode | Child | null; // Added property
+  parentDom: HTMLElement; // Changed from HTMLElement | null to HTMLElement
+  previousVNode: VNode | Child | null;
 }
 
 const instances: ComponentInstance[] = []; // Global instances array
@@ -73,6 +75,26 @@ export function renderComponent(
   return instance.dom!;
 }
 
+export function createComponentInstance(
+  componentFunc: ComponentFunction, // Changed from Function to ComponentFunction
+  parentDom: HTMLElement, // Changed from HTMLElement | null to HTMLElement
+  props: any, // Added props parameter
+): ComponentInstance {
+  instanceCounter++;
+  const newInstance: ComponentInstance = {
+    id: `component-${instanceCounter}`, // Assign a unique ID
+    componentFunc,
+    parentDom,
+    props, // Assign props here
+    dom: null,
+    previousVNode: null,
+    hooks: [],
+    hookIndex: 0,
+  };
+  console.log(`Created new instance: ${newInstance.id} with props:`, props); // Logging
+  return newInstance;
+}
+
 function findOrCreateInstance(
   componentFunc: ComponentFunction,
   container: HTMLElement,
@@ -81,18 +103,12 @@ function findOrCreateInstance(
   let instance = findExistingInstance(componentFunc, container);
 
   if (!instance) {
-    instance = {
-      componentFunc,
-      props,
-      hooks: [],
-      hookIndex: 0,
-      dom: null,
-      parentDom: container,
-      previousVNode: null, // Initialize previousVNode
-    };
+    instance = createComponentInstance(componentFunc, container, props); // Pass props here
     instances.push(instance);
+    console.log(`Created new instance: ${instance.id}`);
   } else {
     instance.props = props;
+    console.log(`Found existing instance: ${instance.id}`);
   }
 
   return instance;
@@ -126,29 +142,75 @@ export function updateExistingDom(
 ): void {
   const oldVNode = instance.previousVNode;
 
+  console.log(`Updating DOM for instance: ${instance.id}`);
+  console.log(`OldVNode: ${JSON.stringify(oldVNode)}`);
+  console.log(`NewVNode: ${JSON.stringify(newVNode)}`);
+
   instance.previousVNode = newVNode; // Update to new VNode
 
-  if (diff(oldVNode!, newVNode)) {
+  if (isVNode(newVNode) && instance.dom instanceof HTMLElement) {
+    console.log(`Updating props and children for instance: ${instance.id}`);
+    // Update props and children without replacing the entire DOM node
+    updatePropsAndChildren(instance.dom, newVNode);
+
+    // **Special Handling for 'select' Elements**
+    if (newVNode.type === 'select') {
+      const newValue = newVNode.props.value;
+      console.log(
+        `Setting value for <select> element in instance: ${instance.id} to '${newValue}'`,
+      );
+      if (newValue !== undefined) {
+        (instance.dom as HTMLSelectElement).value = newValue;
+        console.log(`<select> value set to '${newValue}'`);
+      }
+    }
+  } else {
+    // If newVNode is a primitive or a different type, replace the entire DOM node
+    console.log(
+      `VNode type mismatch or primitive detected. Replacing DOM node for instance: ${instance.id}`,
+    );
     const newDom = renderToDom(newVNode, instance.parentDom);
     if (instance.dom && instance.dom.parentNode) {
       instance.dom.parentNode.replaceChild(newDom, instance.dom);
+      console.log(`Replaced DOM node for instance: ${instance.id}`);
     }
     instance.dom = newDom;
-  } else {
-    if (isVNode(newVNode) && instance.dom instanceof HTMLElement) {
-      updatePropsAndChildren(instance.dom, newVNode);
-    }
   }
+
+  console.log(`Finished updating DOM for instance: ${instance.id}`);
 }
+
+// src/virtual-dom/renderer.ts
 
 function updateElement(dom: HTMLElement | Text, newVnode: Child): void {
   if (isPrimitive(newVnode)) {
     updateTextNode(dom as Text, newVnode);
   } else if (typeof newVnode === 'function') {
     // Handle nested component functions if needed
-    renderComponent(newVnode, dom.parentElement as HTMLElement);
+    renderComponent(newVnode, dom.parentElement as HTMLElement, {});
   } else if (isVNode(newVnode)) {
-    updateDomNode(dom as HTMLElement, newVnode);
+    if (
+      dom instanceof HTMLElement &&
+      dom.tagName.toLowerCase() === newVnode.type.toLowerCase()
+    ) {
+      updatePropsAndChildren(dom, newVnode);
+
+      // **Special Handling for 'select' Elements**
+      if (newVnode.type.toLowerCase() === 'select') {
+        const newValue = newVnode.props.value;
+        if (newValue !== undefined) {
+          (dom as HTMLSelectElement).value = newValue;
+          console.log(`Set <select> value to '${newValue}'`);
+        }
+      }
+    } else {
+      // If the types don't match, replace the DOM node
+      console.log(`VNode type mismatch. Replacing DOM node.`);
+      const newDom = renderToDom(newVnode, dom.parentElement);
+      if (dom.parentNode) {
+        dom.parentNode.replaceChild(newDom, dom);
+      }
+    }
   }
 }
 
@@ -182,25 +244,41 @@ export function updatePropsAndChildren(
   // Reconcile children
   reconcileChildren(dom, newVNode.children);
 }
+// src/virtual-dom/renderer.ts
 
 function reconcileChildren(dom: HTMLElement, children: Child[]): void {
   const domChildren = dom.childNodes;
+  console.log(
+    `Reconciling children for <${dom.tagName.toLowerCase()}>. Expected children count: ${children.length}, Current DOM children count: ${domChildren.length}`,
+  );
 
   children.forEach((childVnode, i) => {
     const childDom = domChildren[i];
+    const isLastChild = i === children.length - 1;
+
+    console.log(`Processing child at index ${i}:`, childVnode);
 
     if (childDom) {
+      console.log(`Updating existing child at index ${i}`);
       updateElement(childDom as HTMLElement | Text, childVnode);
     } else {
+      console.log(`Creating new child DOM for child at index ${i}`);
       const newChildDom = renderToDom(childVnode, dom);
       dom.appendChild(newChildDom);
+      console.log(`Appended new child DOM at index ${i}`);
     }
   });
 
   // Remove any extra DOM children
   while (domChildren.length > children.length) {
-    dom.removeChild(domChildren[children.length]);
+    const extraChild = domChildren[children.length];
+    console.log(`Removing extra child DOM:`, extraChild);
+    dom.removeChild(extraChild);
   }
+
+  console.log(
+    `Finished reconciling children for <${dom.tagName.toLowerCase()}>`,
+  );
 }
 
 export function isPrimitive(value: any): value is string | number | boolean {
