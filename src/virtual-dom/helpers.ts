@@ -2,19 +2,13 @@
 
 import { ComponentFunction, VNode } from './vnode';
 
-export function withProps(
-  component: ComponentFunction,
-  props: any,
-): ComponentFunction {
-  return () => {
-    const vnode = component(props);
-    if (Array.isArray(vnode)) {
-      return {
-        type: 'fragment',
-        props: {},
-        children: vnode,
-      };
-    }
-    return vnode;
-  };
+/**
+ * Binds props to a component function.
+ * @param component - The component function to bind props to.
+ * @param props - The props to pass to the component.
+ * @returns The rendered VNode.
+ */
+export function withProps(component: ComponentFunction, props: any): VNode {
+  // Directly return the rendered VNode from the component
+  return component(props);
 }

@@ -39,11 +39,25 @@ export function useState<S>(initialState: S): [S, StateUpdater<S>] {
     hooks[hookIndex] = createHook(initialState, instance);
   }
 
+  const hook = hooks[hookIndex] as Hook<S>;
+
   // Increment hook index for the next hook call
   instance.hookIndex++;
 
-  const hook = hooks[hookIndex] as Hook<S>;
-  return [hook.state, hook.updater];
+  // Ensure the updater properly schedules updates and modifies the correct instance
+  const stableUpdater: StateUpdater<S> = (newState) => {
+    const nextState =
+      typeof newState === 'function'
+        ? (newState as (prevState: S) => S)(hook.state)
+        : newState;
+
+    if (nextState !== hook.state) {
+      hook.state = nextState;
+      scheduleUpdate(instance);
+    }
+  };
+
+  return [hook.state, stableUpdater];
 }
 
 function createHook<S>(initialState: S, instance: ComponentInstance): Hook<S> {
@@ -62,12 +76,3 @@ function createHook<S>(initialState: S, instance: ComponentInstance): Hook<S> {
 
   return { state: initialState, updater };
 }
-
-let hasRun = false;
-
-export const useEffectOnce = (effect: () => void) => {
-  if (!hasRun) {
-    effect();
-    hasRun = true;
-  }
-};

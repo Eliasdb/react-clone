@@ -8,11 +8,8 @@ interface MyComponentProps {
   label?: string;
 }
 
-const MyComponent = ({
-  initialCount = 0,
-  label = 'Count',
-}: MyComponentProps) => {
-  const [count, setCount] = useState(initialCount);
+const MyComponent = () => {
+  const [count, setCount] = useState(10);
 
   const handleClick = () => {
     setCount((prev) => prev + 1);
@@ -26,7 +23,7 @@ const MyComponent = ({
 
   return template`
     <div>
-      <h2>${label}: ${count}</h2>
+      <h2>Counter: ${count}</h2>
       <button onClick=${handleClick}>Increment</button>
       <button onClick=${handleClick2}>Decrement</button>
     </div>

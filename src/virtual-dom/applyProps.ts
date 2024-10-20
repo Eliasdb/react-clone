@@ -21,18 +21,19 @@ export function applyProps(
   domElement: HTMLElement,
   props: Record<string, any>,
 ): void {
-  let listeners = eventListenersMap.get(domElement) || {};
-  eventListenersMap.set(domElement, listeners);
-
   Object.entries(props).forEach(([key, value]) => {
     if (key.startsWith('on') && typeof value === 'function') {
-      handleEventListeners(domElement, key, value, listeners);
+      // Handle event listeners
+      const eventTypeKey = key.substring(2).toLowerCase();
+      domElement.addEventListener(eventTypeKey, value);
+    } else if (key === 'value' && domElement instanceof HTMLInputElement) {
+      if (domElement.value !== value) {
+        domElement.value = value; // Update value without causing a re-render
+      }
     } else if (key === 'style' && typeof value === 'object') {
       Object.assign(domElement.style, value);
-    } else if (key === 'value' && domElement instanceof HTMLInputElement) {
-      updateInputValue(domElement, value);
     } else {
-      updateAttribute(domElement, key, value);
+      domElement.setAttribute(key, String(value));
     }
   });
 }

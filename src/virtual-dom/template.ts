@@ -3,12 +3,7 @@
 import { Child, VNode, createVNode, isVNode } from './vnode';
 import { isTextNode } from './utils';
 
-interface FragmentVNode extends VNode {
-  type: 'fragment';
-  children: VNode[];
-}
-
-export type RenderableVNode = VNode | FragmentVNode;
+export type RenderableVNode = VNode | VNode[];
 
 export function template(
   strings: TemplateStringsArray,
@@ -20,15 +15,8 @@ export function template(
 
   processChildNodes(container.childNodes, result, values);
 
-  return result.length === 1 ? result[0] : createFragmentVNode(result);
-}
-
-function createFragmentVNode(children: VNode[]): FragmentVNode {
-  return {
-    type: 'fragment',
-    props: {},
-    children,
-  };
+  // Return the actual children as an array if there are multiple
+  return result.length === 1 ? result[0] : result;
 }
 
 // Combine strings and values with placeholders
