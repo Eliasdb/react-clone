@@ -4,6 +4,7 @@ import { withProps } from '../virtual-dom/helpers';
 import { template } from '../virtual-dom/template';
 import FormComponent from './FormComponent';
 import MyComponent from './TestComponent';
+import MyComponent2 from './TestComponent2';
 
 const myComponentProps = {
   initialCount: 10, // Example prop
@@ -14,13 +15,13 @@ const App = () => {
   console.log('rerender pp');
 
   return template`
-    <div class="test">
-      <h1>Welcome to My App!</h1>
-         ${withProps(MyComponent, myComponentProps)} 
-        ${FormComponent} 
-
-    </div>
-  `;
+<div class="test">
+  <h1>Welcome to My App!</h1>
+  ${withProps(MyComponent, myComponentProps)}
+  ${MyComponent2}
+  ${FormComponent}
+</div>
+`;
 };
 
 export default App;

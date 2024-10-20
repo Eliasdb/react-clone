@@ -62,3 +62,12 @@ function createHook<S>(initialState: S, instance: ComponentInstance): Hook<S> {
 
   return { state: initialState, updater };
 }
+
+let hasRun = false;
+
+export const useEffectOnce = (effect: () => void) => {
+  if (!hasRun) {
+    effect();
+    hasRun = true;
+  }
+};
