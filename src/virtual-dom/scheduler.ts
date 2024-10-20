@@ -3,7 +3,6 @@
 import {
   ComponentInstance,
   isPrimitive,
-  reconcileChildren,
   renderToDom,
   updateExistingDom,
   updatePropsAndChildren,
@@ -17,6 +16,7 @@ const updateQueue: Set<ComponentInstance> = new Set();
 
 export function scheduleUpdate(instance: ComponentInstance) {
   updateQueue.add(instance);
+  console.log(`Scheduled update for component: ${instance.componentFunc.name}`);
 
   if (!isScheduled) {
     isScheduled = true;
@@ -32,15 +32,13 @@ function flushUpdates() {
     setCurrentInstance(instance);
     resetHooks();
 
-    const vnode = componentFunc(props);
+    const newVNode = componentFunc(props);
     setCurrentInstance(previousInstance);
 
     if (instance.dom) {
-      // Instead of replacing the entire DOM, let's update it
-      updateExistingDom(instance, vnode);
+      updateExistingDom(instance, newVNode);
     } else {
-      // Handle the initial rendering
-      const newDom = renderToDom(vnode, parentDom);
+      const newDom = renderToDom(newVNode, parentDom);
       if (parentDom) {
         parentDom.appendChild(newDom);
       }
@@ -53,30 +51,53 @@ function flushUpdates() {
 }
 
 export function diff(
-  oldDom: HTMLElement | Text | null,
+  oldVNode: VNode | Child | null,
   newVNode: VNode | Child,
 ): boolean {
-  if (oldDom === null) {
-    return true; // If there's no old DOM, we need to create a new one.
-  }
-
-  if (isPrimitive(newVNode) && oldDom instanceof Text) {
-    if (oldDom.textContent !== String(newVNode)) {
-      oldDom.textContent = String(newVNode);
-      return false; // No replacement, just updated content.
-    }
-  } else if (isVNode(newVNode) && oldDom instanceof HTMLElement) {
-    if (oldDom.nodeName.toLowerCase() !== newVNode.type) {
-      return true; // Replace the old node with the new one.
-    } else {
-      // Apply attribute updates and reconcile children.
-      updatePropsAndChildren(oldDom, newVNode);
-      return false; // No replacement needed, just updated attributes/children.
-    }
-  } else {
-    // If the types do not match, mark for replacement.
+  if (oldVNode === null) {
     return true;
   }
 
-  return false;
+  if (isPrimitive(newVNode) && isPrimitive(oldVNode)) {
+    const result = String(oldVNode) !== String(newVNode);
+    return result;
+  } else if (isVNode(newVNode) && isVNode(oldVNode)) {
+    if (oldVNode.type !== newVNode.type) {
+      return true; // Different types, replace
+    }
+
+    // Compare props
+    const oldProps = oldVNode.props;
+    const newProps = newVNode.props;
+
+    const allKeys = new Set([
+      ...Object.keys(oldProps),
+      ...Object.keys(newProps),
+    ]);
+    let propsChanged = false;
+    for (let key of allKeys) {
+      if (newProps[key] !== oldProps[key]) {
+        propsChanged = true;
+      }
+    }
+
+    if (propsChanged) {
+      return true; // Props have changed, need to update
+    }
+
+    // Recursively check children
+    if (newVNode.children.length !== oldVNode.children.length) {
+      return true; // Different number of children
+    }
+
+    for (let i = 0; i < newVNode.children.length; i++) {
+      if (diff(oldVNode.children[i], newVNode.children[i])) {
+        return true;
+      }
+    }
+
+    return false; // No changes detected
+  } else {
+    return true; // Different types, replace.
+  }
 }

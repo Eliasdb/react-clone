@@ -1,3 +1,5 @@
+// src/virtual-dom/applyProps.ts
+
 const eventMap: Record<string, keyof HTMLElementEventMap> = {
   click: 'click',
   input: 'input',
@@ -17,23 +19,28 @@ const eventListenersMap = new WeakMap<
   Partial<Record<keyof HTMLElementEventMap, EventListener>>
 >();
 
+function updateInputValue(domElement: HTMLInputElement, value: any): void {
+  if (domElement.value !== value) {
+    domElement.value = value;
+  }
+}
+
 export function applyProps(
   domElement: HTMLElement,
   props: Record<string, any>,
 ): void {
+  let listeners = eventListenersMap.get(domElement) || {};
+  eventListenersMap.set(domElement, listeners);
+
   Object.entries(props).forEach(([key, value]) => {
     if (key.startsWith('on') && typeof value === 'function') {
-      // Handle event listeners
-      const eventTypeKey = key.substring(2).toLowerCase();
-      domElement.addEventListener(eventTypeKey, value);
+      handleEventListeners(domElement, key, value, listeners);
     } else if (key === 'value' && domElement instanceof HTMLInputElement) {
-      if (domElement.value !== value) {
-        domElement.value = value; // Update value without causing a re-render
-      }
+      updateInputValue(domElement, value);
     } else if (key === 'style' && typeof value === 'object') {
       Object.assign(domElement.style, value);
     } else {
-      domElement.setAttribute(key, String(value));
+      updateAttribute(domElement, key, value);
     }
   });
 }
@@ -63,12 +70,6 @@ function handleEventListeners(
   // Add the new event listener and update the listeners record
   domElement.addEventListener(mappedEventType, value);
   listeners[mappedEventType] = value;
-}
-
-function updateInputValue(domElement: HTMLInputElement, value: any): void {
-  if (domElement.value !== value) {
-    domElement.value = value;
-  }
 }
 
 function updateAttribute(

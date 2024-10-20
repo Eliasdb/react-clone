@@ -44,7 +44,6 @@ export function useState<S>(initialState: S): [S, StateUpdater<S>] {
   // Increment hook index for the next hook call
   instance.hookIndex++;
 
-  // Ensure the updater properly schedules updates and modifies the correct instance
   const stableUpdater: StateUpdater<S> = (newState) => {
     const nextState =
       typeof newState === 'function'
@@ -61,18 +60,20 @@ export function useState<S>(initialState: S): [S, StateUpdater<S>] {
 }
 
 function createHook<S>(initialState: S, instance: ComponentInstance): Hook<S> {
-  const updater: StateUpdater<S> = (newState) => {
-    const hook = instance.hooks[instance.hookIndex - 1] as Hook<S>;
-    const nextState =
-      typeof newState === 'function'
-        ? (newState as (prevState: S) => S)(hook.state)
-        : newState;
+  return {
+    state: initialState,
+    updater: (newState) => {
+      const hook = instance.hooks[instance.hookIndex - 1] as Hook<S>;
+      const nextState =
+        typeof newState === 'function'
+          ? (newState as (prevState: S) => S)(hook.state)
+          : newState;
 
-    if (nextState !== hook.state) {
-      hook.state = nextState;
-      scheduleUpdate(instance);
-    }
+      console.log(`Updating state from ${hook.state} to ${nextState}`);
+      if (nextState !== hook.state) {
+        hook.state = nextState;
+        scheduleUpdate(instance);
+      }
+    },
   };
-
-  return { state: initialState, updater };
 }

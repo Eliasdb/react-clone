@@ -55,12 +55,19 @@ function processChildNodes(
 
 function processTextNode(node: Text, children: Child[], values: any[]): void {
   const textContent = node.textContent || '';
+  const trimmedText = textContent.trim();
+
+  if (trimmedText === '') {
+    // Skip adding purely whitespace text nodes
+    return;
+  }
+
   const parts = splitByPlaceholders(textContent);
 
   parts.forEach((part, index) => {
-    if (index % 2 === 0 && part !== '') {
+    if (index % 2 === 0 && part.trim() !== '') {
       // Add regular text directly
-      children.push(part);
+      children.push(part.trim());
     } else if (index % 2 === 1) {
       const value = values[parseInt(part, 10)];
       if (typeof value === 'function') {

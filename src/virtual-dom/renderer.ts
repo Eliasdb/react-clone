@@ -6,6 +6,8 @@ import { resetHooks, setCurrentInstance, getCurrentInstance } from './hooks';
 import { applyProps } from './applyProps';
 import { diff, scheduleUpdate } from './scheduler';
 
+// src/virtual-dom/renderer.ts
+
 export interface ComponentInstance {
   componentFunc: ComponentFunction;
   props: any;
@@ -13,6 +15,7 @@ export interface ComponentInstance {
   hookIndex: number;
   dom: HTMLElement | Text | null;
   parentDom: HTMLElement;
+  previousVNode: VNode | Child | null; // Added property
 }
 
 const instances: ComponentInstance[] = []; // Global instances array
@@ -41,20 +44,35 @@ export function renderComponent(
 
   setCurrentInstanceAndResetHooks(instance);
 
-  const vnodeRendered = componentFunc(props);
+  const newVNode = componentFunc(props); // Generate new VNode
   restorePreviousInstance();
 
+  const oldVNode = instance.previousVNode; // Get old VNode
+
   if (instance.dom) {
-    // Update the existing DOM node in place
-    updateExistingDom(instance, vnodeRendered);
-    return instance.dom;
+    if (diff(oldVNode, newVNode)) {
+      // If diff returns true, replace the DOM node
+      const newDom = renderToDom(newVNode, container);
+      if (instance.dom && instance.dom.parentNode) {
+        instance.dom.parentNode.replaceChild(newDom, instance.dom);
+      }
+      instance.dom = newDom;
+    } else {
+      // If diff returns false, update props and children
+      if (isVNode(newVNode) && instance.dom instanceof HTMLElement) {
+        updatePropsAndChildren(instance.dom, newVNode);
+      }
+    }
   } else {
     // Initial render
-    const dom = renderToDom(vnodeRendered, container);
+    const dom = renderToDom(newVNode, container);
     instance.dom = dom;
     container.appendChild(dom);
-    return dom;
   }
+
+  instance.previousVNode = newVNode; // Set previousVNode after updating
+
+  return instance.dom!;
 }
 
 function findOrCreateInstance(
@@ -72,6 +90,7 @@ function findOrCreateInstance(
       hookIndex: 0,
       dom: null,
       parentDom: container,
+      previousVNode: null, // Initialize previousVNode
     };
     instances.push(instance);
   } else {
@@ -84,19 +103,18 @@ function findOrCreateInstance(
 function findExistingInstance(
   componentFunc: ComponentFunction,
   container: HTMLElement,
-): ComponentInstance | null {
-  return (
-    instances.find(
-      (instance) =>
-        instance.componentFunc === componentFunc &&
-        instance.parentDom === container,
-    ) || null
+): ComponentInstance | undefined {
+  // Changed from | null to | undefined
+  return instances.find(
+    (instance) =>
+      instance.componentFunc === componentFunc &&
+      instance.parentDom === container,
   );
 }
 
 function setCurrentInstanceAndResetHooks(instance: ComponentInstance): void {
   setCurrentInstance(instance);
-  resetHooks();
+  resetHooks(); // This makes sure hook indices start from 0 on every render.
 }
 
 function restorePreviousInstance(): void {
@@ -106,25 +124,22 @@ function restorePreviousInstance(): void {
 
 export function updateExistingDom(
   instance: ComponentInstance,
-  vnodeRendered: VNode | Child,
+  newVNode: VNode | Child,
 ): void {
-  if (instance.dom) {
-    const shouldReplace = diff(instance.dom, vnodeRendered);
-    if (shouldReplace) {
-      // Replace the DOM node entirely if necessary
-      const newDom = renderToDom(vnodeRendered, instance.dom?.parentElement);
-      if (instance.dom && instance.dom.parentNode) {
-        instance.dom.parentNode.replaceChild(newDom, instance.dom);
-      }
-      instance.dom = newDom;
-    }
-  } else {
-    // Initial render
-    const newDom = renderToDom(vnodeRendered, instance.parentDom);
-    if (instance.parentDom) {
-      instance.parentDom.appendChild(newDom);
+  const oldVNode = instance.previousVNode;
+  instance.previousVNode = newVNode; // Update to new VNode
+
+  if (diff(oldVNode!, newVNode)) {
+    const newDom = renderToDom(newVNode, instance.parentDom);
+    if (instance.dom && instance.dom.parentNode) {
+      instance.dom.parentNode.replaceChild(newDom, instance.dom);
     }
     instance.dom = newDom;
+  } else {
+    // If not replacing, ensure props and children are updated
+    if (isVNode(newVNode) && instance.dom instanceof HTMLElement) {
+      updatePropsAndChildren(instance.dom, newVNode);
+    }
   }
 }
 
@@ -155,19 +170,22 @@ function updateDomNode(dom: HTMLElement, newVnode: VNode): void {
 }
 
 function replaceDomNode(dom: HTMLElement, newVnode: VNode): void {
-  const newDom = renderToDom(newVnode, dom.parentElement);
+  const newDom = renderToDom(newVnode);
   dom.parentElement?.replaceChild(newDom, dom);
 }
 
 export function updatePropsAndChildren(
   dom: HTMLElement,
-  newVnode: VNode,
+  newVNode: VNode,
 ): void {
-  applyProps(dom, newVnode.props);
-  reconcileChildren(dom, newVnode.children);
+  // Update props
+  applyProps(dom, newVNode.props);
+
+  // Reconcile children
+  reconcileChildren(dom, newVNode.children);
 }
 
-export function reconcileChildren(dom: HTMLElement, children: Child[]): void {
+function reconcileChildren(dom: HTMLElement, children: Child[]): void {
   const domChildren = dom.childNodes;
 
   children.forEach((childVnode, i) => {
@@ -205,33 +223,11 @@ export function renderToDom(
       const childDom = renderToDom(child, parentDom);
       fragment.appendChild(childDom);
     });
-    if (parentDom) {
-      parentDom.appendChild(fragment);
-    }
-    return fragment as unknown as HTMLElement | Text; // Ensure compatibility by treating fragment correctly
+    return fragment as unknown as HTMLElement | Text;
   } else if (typeof vnode === 'function') {
-    // Treat as a component function
-    const instance: ComponentInstance = {
-      componentFunc: vnode,
-      props: {},
-      hooks: [],
-      hookIndex: 0,
-      dom: null,
-      parentDom: parentDom as HTMLElement,
-    };
-
-    setCurrentInstance(instance);
-    resetHooks();
-
-    const childVnode = vnode(instance.props);
-
-    const dom = renderToDom(childVnode, parentDom);
-
-    setCurrentInstance(null);
-
-    instance.dom = dom;
-
-    return dom;
+    // Render component functions to DOM
+    const componentInstance = renderComponent(vnode, parentDom as HTMLElement);
+    return componentInstance;
   } else if (isPrimitive(vnode)) {
     return document.createTextNode(String(vnode));
   } else if (isVNode(vnode)) {

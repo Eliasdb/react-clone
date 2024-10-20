@@ -1,12 +1,7 @@
-// src/components/MyComponent.ts
+// src/components/TestComponent.ts
 
 import { useState } from '../virtual-dom/hooks';
 import { template } from '../virtual-dom/template';
-
-interface MyComponentProps {
-  initialCount?: number;
-  label?: string;
-}
 
 const MyComponent = () => {
   const [count, setCount] = useState(10);
@@ -19,7 +14,7 @@ const MyComponent = () => {
     setCount((prev) => prev - 1);
   };
 
-  console.log('rerender');
+  console.log('rerender MyComponent', count);
 
   return template`
     <div>
