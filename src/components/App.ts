@@ -1,7 +1,7 @@
 // src/components/App.ts
 
 import { template } from '../virtual-dom/template';
-import FormComponent from './FormComponent';
+import LifeExpectancyFormComponent from './FormComponent';
 import SelectComponent from './SelectComponent';
 import MyComponent from './TestComponent';
 
@@ -10,10 +10,8 @@ const App = () => {
 
   return template`
     <div class="test">
-      <h1>Welcome to My App!</h1>
- 
-      ${SelectComponent}
-
+      <h1>How Long Do You Have Left?</h1>
+       ${LifeExpectancyFormComponent}
     </div>
   `;
 };

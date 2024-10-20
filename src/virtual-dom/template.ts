@@ -13,11 +13,14 @@ export function template(
 
   const container = createContainerFromHTML(combinedString);
   const result: VNode[] = [];
-
   processChildNodes(container.childNodes, result, values);
 
+  // Flatten the result in case there are nested arrays
+  const flattenedResult = flatten(result);
+
   // Return the actual children as an array if there are multiple
-  const finalResult = result.length === 1 ? result[0] : result;
+  const finalResult =
+    flattenedResult.length === 1 ? flattenedResult[0] : flattenedResult;
   return finalResult;
 }
 
@@ -76,6 +79,20 @@ function processTextNode(node: Text, children: Child[], values: any[]): void {
         children.push(value);
       } else if (isVNode(value)) {
         children.push(value);
+      } else if (Array.isArray(value)) {
+        // Handle array of VNodes
+        value.forEach((v) => {
+          if (isVNode(v)) {
+            children.push(v);
+          } else if (
+            isTextNode(v) ||
+            typeof v === 'string' ||
+            typeof v === 'number' ||
+            typeof v === 'boolean'
+          ) {
+            children.push(String(v));
+          }
+        });
       } else if (
         isTextNode(value) ||
         typeof value === 'string' ||
@@ -149,4 +166,14 @@ function addElementAttributes(
 function splitByPlaceholders(text: string): string[] {
   const placeholderRegex = /__PLACEHOLDER__(\d+)__/g;
   return text.split(placeholderRegex);
+}
+
+// Utility function to flatten nested arrays
+function flatten(arr: any[]): any[] {
+  return arr.reduce((flat, toFlatten) => {
+    if (Array.isArray(toFlatten)) {
+      return flat.concat(flatten(toFlatten));
+    }
+    return flat.concat(toFlatten);
+  }, []);
 }

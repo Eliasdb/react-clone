@@ -75,7 +75,7 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: rgb(159, 55, 55);
 }
 button:focus,
 button:focus-visible {
@@ -97,4 +97,45 @@ button:focus-visible {
 
 .test {
   min-height: 100vh;
+}
+
+.life-expectancy-form {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+label {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 10px;
+}
+
+button {
+  margin-top: 10px;
+}
+
+.visual-representation {
+  margin-top: 20px;
+}
+
+.dots-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  background-color: rgb(207, 225, 92);
+  border-radius: 50%;
+}
+
+.dot.lived {
+  background-color: rgb(9, 9, 9);
+}
+
+input[type='number' i] {
+  max-width: 3rem;
 }
