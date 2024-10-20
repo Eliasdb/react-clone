@@ -14,8 +14,6 @@ const MyComponent = () => {
     setCount((prev) => prev - 1);
   };
 
-  console.log('rerender MyComponent', count);
-
   return template`
     <div>
       <h2>Counter: ${count}</h2>

@@ -69,7 +69,6 @@ function createHook<S>(initialState: S, instance: ComponentInstance): Hook<S> {
           ? (newState as (prevState: S) => S)(hook.state)
           : newState;
 
-      console.log(`Updating state from ${hook.state} to ${nextState}`);
       if (nextState !== hook.state) {
         hook.state = nextState;
         scheduleUpdate(instance);

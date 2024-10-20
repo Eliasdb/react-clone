@@ -45,26 +45,24 @@ export function renderComponent(
   setCurrentInstanceAndResetHooks(instance);
 
   const newVNode = componentFunc(props); // Generate new VNode
+
   restorePreviousInstance();
 
   const oldVNode = instance.previousVNode; // Get old VNode
 
   if (instance.dom) {
     if (diff(oldVNode, newVNode)) {
-      // If diff returns true, replace the DOM node
       const newDom = renderToDom(newVNode, container);
       if (instance.dom && instance.dom.parentNode) {
         instance.dom.parentNode.replaceChild(newDom, instance.dom);
       }
       instance.dom = newDom;
     } else {
-      // If diff returns false, update props and children
       if (isVNode(newVNode) && instance.dom instanceof HTMLElement) {
         updatePropsAndChildren(instance.dom, newVNode);
       }
     }
   } else {
-    // Initial render
     const dom = renderToDom(newVNode, container);
     instance.dom = dom;
     container.appendChild(dom);
@@ -127,6 +125,7 @@ export function updateExistingDom(
   newVNode: VNode | Child,
 ): void {
   const oldVNode = instance.previousVNode;
+
   instance.previousVNode = newVNode; // Update to new VNode
 
   if (diff(oldVNode!, newVNode)) {
@@ -136,7 +135,6 @@ export function updateExistingDom(
     }
     instance.dom = newDom;
   } else {
-    // If not replacing, ensure props and children are updated
     if (isVNode(newVNode) && instance.dom instanceof HTMLElement) {
       updatePropsAndChildren(instance.dom, newVNode);
     }
@@ -229,7 +227,8 @@ export function renderToDom(
     const componentInstance = renderComponent(vnode, parentDom as HTMLElement);
     return componentInstance;
   } else if (isPrimitive(vnode)) {
-    return document.createTextNode(String(vnode));
+    const textNode = document.createTextNode(String(vnode));
+    return textNode;
   } else if (isVNode(vnode)) {
     const domElement = document.createElement(vnode.type);
     applyProps(domElement, vnode.props);

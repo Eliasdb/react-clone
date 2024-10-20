@@ -10,13 +10,15 @@ export function template(
   ...values: any[]
 ): RenderableVNode {
   const combinedString = combineStringsAndValues(strings, values);
+
   const container = createContainerFromHTML(combinedString);
   const result: VNode[] = [];
 
   processChildNodes(container.childNodes, result, values);
 
   // Return the actual children as an array if there are multiple
-  return result.length === 1 ? result[0] : result;
+  const finalResult = result.length === 1 ? result[0] : result;
+  return finalResult;
 }
 
 // Combine strings and values with placeholders

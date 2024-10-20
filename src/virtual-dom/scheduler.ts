@@ -16,7 +16,6 @@ const updateQueue: Set<ComponentInstance> = new Set();
 
 export function scheduleUpdate(instance: ComponentInstance) {
   updateQueue.add(instance);
-  console.log(`Scheduled update for component: ${instance.componentFunc.name}`);
 
   if (!isScheduled) {
     isScheduled = true;
@@ -33,6 +32,7 @@ function flushUpdates() {
     resetHooks();
 
     const newVNode = componentFunc(props);
+
     setCurrentInstance(previousInstance);
 
     if (instance.dom) {
@@ -50,6 +50,8 @@ function flushUpdates() {
   isScheduled = false;
 }
 
+// src/virtual-dom/scheduler.ts
+
 export function diff(
   oldVNode: VNode | Child | null,
   newVNode: VNode | Child,
@@ -60,13 +62,14 @@ export function diff(
 
   if (isPrimitive(newVNode) && isPrimitive(oldVNode)) {
     const result = String(oldVNode) !== String(newVNode);
+
     return result;
   } else if (isVNode(newVNode) && isVNode(oldVNode)) {
     if (oldVNode.type !== newVNode.type) {
       return true; // Different types, replace
     }
 
-    // Compare props
+    // Compare props, excluding event handlers
     const oldProps = oldVNode.props;
     const newProps = newVNode.props;
 
@@ -74,15 +77,41 @@ export function diff(
       ...Object.keys(oldProps),
       ...Object.keys(newProps),
     ]);
+
     let propsChanged = false;
     for (let key of allKeys) {
+      if (key.startsWith('on')) {
+        // Skip event handler props
+        continue;
+      }
       if (newProps[key] !== oldProps[key]) {
         propsChanged = true;
       }
     }
 
+    // Special handling for input elements to avoid replacing DOM nodes
+    if (newVNode.type === 'input') {
+      // Check if any non 'value' and non 'on*' prop has changed
+      let otherPropsChanged = false;
+      for (let key of allKeys) {
+        if (key === 'value' || key.startsWith('on')) {
+          continue;
+        }
+        if (newProps[key] !== oldProps[key]) {
+          otherPropsChanged = true;
+
+          break;
+        }
+      }
+
+      if (!otherPropsChanged && newProps.value !== oldProps.value) {
+        // Instead of returning true (replace), return false to update props and children
+        return false;
+      }
+    }
+
     if (propsChanged) {
-      return true; // Props have changed, need to update
+      return true; // Props have changed, need to replace
     }
 
     // Recursively check children

@@ -19,12 +19,6 @@ const eventListenersMap = new WeakMap<
   Partial<Record<keyof HTMLElementEventMap, EventListener>>
 >();
 
-function updateInputValue(domElement: HTMLInputElement, value: any): void {
-  if (domElement.value !== value) {
-    domElement.value = value;
-  }
-}
-
 export function applyProps(
   domElement: HTMLElement,
   props: Record<string, any>,
@@ -43,6 +37,12 @@ export function applyProps(
       updateAttribute(domElement, key, value);
     }
   });
+}
+
+function updateInputValue(domElement: HTMLInputElement, value: any): void {
+  if (domElement.value !== value) {
+    domElement.value = value;
+  }
 }
 
 function handleEventListeners(
