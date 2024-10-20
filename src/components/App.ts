@@ -18,7 +18,6 @@ const App = () => {
 <div class="test">
   <h1>Welcome to My App!</h1>
   ${withProps(MyComponent, myComponentProps)}
-  ${MyComponent2}
   ${FormComponent}
 </div>
 `;

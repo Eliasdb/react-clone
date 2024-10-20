@@ -1,5 +1,3 @@
-// src/virtual-dom/applyProps.ts
-
 const eventMap: Record<string, keyof HTMLElementEventMap> = {
   click: 'click',
   input: 'input',
@@ -23,54 +21,63 @@ export function applyProps(
   domElement: HTMLElement,
   props: Record<string, any>,
 ): void {
-  // Retrieve existing listeners or initialize an empty record
-  let listeners = eventListenersMap.get(domElement);
-  if (!listeners) {
-    listeners = {};
-    eventListenersMap.set(domElement, listeners);
-  }
+  let listeners = eventListenersMap.get(domElement) || {};
+  eventListenersMap.set(domElement, listeners);
 
   Object.entries(props).forEach(([key, value]) => {
     if (key.startsWith('on') && typeof value === 'function') {
-      // Extract the event type from the prop key (e.g., 'onClick' -> 'click')
-      const eventTypeKey = key.substring(2).toLowerCase();
-      const mappedEventType = eventMap[eventTypeKey];
-
-      if (mappedEventType) {
-        // Remove existing listener if present
-        if (listeners[mappedEventType]) {
-          domElement.removeEventListener(
-            mappedEventType,
-            listeners[mappedEventType]!,
-          );
-          console.log(`Removed existing listener for ${mappedEventType}`);
-        }
-
-        // Add the new event listener
-        domElement.addEventListener(mappedEventType, value as EventListener);
-        console.log(`Added listener for ${mappedEventType}`);
-
-        // Update the listeners record
-        listeners[mappedEventType] = value as EventListener;
-      } else {
-        console.warn(`Unsupported event type: ${eventTypeKey}`);
-      }
-    } else if (key === 'value' && domElement instanceof HTMLInputElement) {
-      if (domElement.value !== value) {
-        domElement.value = value;
-      }
+      handleEventListeners(domElement, key, value, listeners);
     } else if (key === 'style' && typeof value === 'object') {
       Object.assign(domElement.style, value);
-    } else if (typeof value === 'boolean') {
-      if (value) {
-        domElement.setAttribute(key, '');
-      } else {
-        domElement.removeAttribute(key);
-      }
+    } else if (key === 'value' && domElement instanceof HTMLInputElement) {
+      updateInputValue(domElement, value);
     } else {
-      domElement.setAttribute(key, String(value));
+      updateAttribute(domElement, key, value);
     }
   });
+}
 
-  // No need to set again as 'listeners' is already in the WeakMap
+function handleEventListeners(
+  domElement: HTMLElement,
+  key: string,
+  value: EventListener,
+  listeners: Partial<Record<keyof HTMLElementEventMap, EventListener>>,
+): void {
+  const eventTypeKey = key.substring(2).toLowerCase();
+  const mappedEventType = eventMap[eventTypeKey];
+
+  if (!mappedEventType) {
+    console.warn(`Unsupported event type: ${eventTypeKey}`);
+    return;
+  }
+
+  // Remove the old event listener, if one exists
+  if (listeners[mappedEventType]) {
+    domElement.removeEventListener(
+      mappedEventType,
+      listeners[mappedEventType]!,
+    );
+  }
+
+  // Add the new event listener and update the listeners record
+  domElement.addEventListener(mappedEventType, value);
+  listeners[mappedEventType] = value;
+}
+
+function updateInputValue(domElement: HTMLInputElement, value: any): void {
+  if (domElement.value !== value) {
+    domElement.value = value;
+  }
+}
+
+function updateAttribute(
+  domElement: HTMLElement,
+  key: string,
+  value: any,
+): void {
+  if (typeof value === 'boolean') {
+    value ? domElement.setAttribute(key, '') : domElement.removeAttribute(key);
+  } else {
+    domElement.setAttribute(key, String(value));
+  }
 }

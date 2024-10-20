@@ -8,7 +8,7 @@ const FormComponent = () => {
 
   const handleInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
-    // setInputValue(target.value);
+    setInputValue(target.value);
   };
 
   const handleSubmit = (e: Event) => {

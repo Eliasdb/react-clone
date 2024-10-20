@@ -3,17 +3,32 @@
 import { Child, VNode, createVNode, isVNode } from './vnode';
 import { isTextNode } from './utils';
 
+interface FragmentVNode extends VNode {
+  type: 'fragment';
+  children: VNode[];
+}
+
+export type RenderableVNode = VNode | FragmentVNode;
+
 export function template(
   strings: TemplateStringsArray,
   ...values: any[]
-): VNode {
+): RenderableVNode {
   const combinedString = combineStringsAndValues(strings, values);
   const container = createContainerFromHTML(combinedString);
   const result: VNode[] = [];
 
   processChildNodes(container.childNodes, result, values);
 
-  return result.length === 1 ? result[0] : createVNode('div', {}, result);
+  return result.length === 1 ? result[0] : createFragmentVNode(result);
+}
+
+function createFragmentVNode(children: VNode[]): FragmentVNode {
+  return {
+    type: 'fragment',
+    props: {},
+    children,
+  };
 }
 
 // Combine strings and values with placeholders
