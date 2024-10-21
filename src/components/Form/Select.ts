@@ -1,4 +1,4 @@
-import { template } from '../../virtual-dom/index';
+import { template } from '../../virtual-dom';
 
 interface SelectComponentProps {
   country: string;
@@ -6,7 +6,7 @@ interface SelectComponentProps {
   lifeExpectancyData: { [key: string]: number };
 }
 
-const SelectComponent = ({
+const Select = ({
   country,
   handleCountryChange,
   lifeExpectancyData,
@@ -27,4 +27,4 @@ const SelectComponent = ({
   `;
 };
 
-export default SelectComponent;
+export default Select;

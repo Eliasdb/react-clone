@@ -1,17 +1,13 @@
-// src/components/App.ts
-
-import { template } from '../virtual-dom/template';
-import LifeExpectancyFormComponent from './Form/FormComponent';
+import { template } from '../virtual-dom';
+import FormContainer from './Form/FormContainer';
+import IntroText from './IntroText';
 
 const App = () => {
-  console.log('rerender app');
-
   return template`
-    <div class="test">
-      <h1>How Long Do You Have Left?</h1>
-       <p>Let's find out...</p>
-       ${LifeExpectancyFormComponent}
-    </div>
+    <main class="test">
+      ${IntroText}
+      ${FormContainer}
+    </main>
   `;
 };
 

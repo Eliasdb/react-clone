@@ -5,7 +5,7 @@ interface InputProps {
   handleAgeInput: (e: Event) => void;
 }
 
-const Input = ({ age, handleAgeInput }: InputProps) => {
+const InputField = ({ age, handleAgeInput }: InputProps) => {
   return template`
     <section class="input-field">
       <label>Enter your age</label>
@@ -14,4 +14,4 @@ const Input = ({ age, handleAgeInput }: InputProps) => {
   `;
 };
 
-export default Input;
+export default InputField;
