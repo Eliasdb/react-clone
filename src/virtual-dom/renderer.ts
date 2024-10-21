@@ -140,25 +140,16 @@ export function updateExistingDom(
   instance: ComponentInstance,
   newVNode: VNode | Child,
 ): void {
-  const oldVNode = instance.previousVNode;
-
-  console.log(`Updating DOM for instance: ${instance.id}`);
-  console.log(`OldVNode: ${JSON.stringify(oldVNode)}`);
-  console.log(`NewVNode: ${JSON.stringify(newVNode)}`);
-
   instance.previousVNode = newVNode; // Update to new VNode
 
   if (isVNode(newVNode) && instance.dom instanceof HTMLElement) {
-    console.log(`Updating props and children for instance: ${instance.id}`);
     // Update props and children without replacing the entire DOM node
     updatePropsAndChildren(instance.dom, newVNode);
 
     // **Special Handling for 'select' Elements**
     if (newVNode.type === 'select') {
       const newValue = newVNode.props.value;
-      console.log(
-        `Setting value for <select> element in instance: ${instance.id} to '${newValue}'`,
-      );
+
       if (newValue !== undefined) {
         (instance.dom as HTMLSelectElement).value = newValue;
         console.log(`<select> value set to '${newValue}'`);
@@ -166,18 +157,13 @@ export function updateExistingDom(
     }
   } else {
     // If newVNode is a primitive or a different type, replace the entire DOM node
-    console.log(
-      `VNode type mismatch or primitive detected. Replacing DOM node for instance: ${instance.id}`,
-    );
+
     const newDom = renderToDom(newVNode, instance.parentDom);
     if (instance.dom && instance.dom.parentNode) {
       instance.dom.parentNode.replaceChild(newDom, instance.dom);
-      console.log(`Replaced DOM node for instance: ${instance.id}`);
     }
     instance.dom = newDom;
   }
-
-  console.log(`Finished updating DOM for instance: ${instance.id}`);
 }
 
 // src/virtual-dom/renderer.ts
@@ -248,37 +234,23 @@ export function updatePropsAndChildren(
 
 function reconcileChildren(dom: HTMLElement, children: Child[]): void {
   const domChildren = dom.childNodes;
-  console.log(
-    `Reconciling children for <${dom.tagName.toLowerCase()}>. Expected children count: ${children.length}, Current DOM children count: ${domChildren.length}`,
-  );
 
   children.forEach((childVnode, i) => {
     const childDom = domChildren[i];
-    const isLastChild = i === children.length - 1;
-
-    console.log(`Processing child at index ${i}:`, childVnode);
 
     if (childDom) {
-      console.log(`Updating existing child at index ${i}`);
       updateElement(childDom as HTMLElement | Text, childVnode);
     } else {
-      console.log(`Creating new child DOM for child at index ${i}`);
       const newChildDom = renderToDom(childVnode, dom);
       dom.appendChild(newChildDom);
-      console.log(`Appended new child DOM at index ${i}`);
     }
   });
 
   // Remove any extra DOM children
   while (domChildren.length > children.length) {
     const extraChild = domChildren[children.length];
-    console.log(`Removing extra child DOM:`, extraChild);
     dom.removeChild(extraChild);
   }
-
-  console.log(
-    `Finished reconciling children for <${dom.tagName.toLowerCase()}>`,
-  );
 }
 
 export function isPrimitive(value: any): value is string | number | boolean {

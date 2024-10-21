@@ -1,5 +1,4 @@
-import { useState } from '../virtual-dom/hooks';
-import { template } from '../virtual-dom/template';
+import { template } from '../../virtual-dom';
 
 interface InputProps {
   age: number;

@@ -1,4 +1,4 @@
-import { template } from '../virtual-dom/template';
+import { template } from '../../virtual-dom/index';
 
 interface SelectComponentProps {
   country: string;

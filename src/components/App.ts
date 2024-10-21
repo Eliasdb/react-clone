@@ -1,7 +1,7 @@
 // src/components/App.ts
 
 import { template } from '../virtual-dom/template';
-import LifeExpectancyFormComponent from './FormComponent';
+import LifeExpectancyFormComponent from './Form/FormComponent';
 
 const App = () => {
   console.log('rerender app');

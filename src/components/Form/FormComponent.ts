@@ -1,10 +1,11 @@
-import { useState } from '../virtual-dom/hooks';
-import { template } from '../virtual-dom/template';
-import { lifeExpectancyData } from '../data/data'; // Import the data
+import { template } from '../../virtual-dom';
+import { useState } from '../../virtual-dom';
+import { withProps } from '../../virtual-dom';
+
+import { lifeExpectancyData } from '../../data/data'; // Import the data
 import Input from './InputComponent';
-import { withProps } from '../virtual-dom/helpers';
 import SelectComponent from './SelectComponent';
-import DotsContainer from './DotsContainer';
+import DotsContainer from './../DotsContainer';
 
 const LifeExpectancyFormComponent = () => {
   console.log('rerender');
