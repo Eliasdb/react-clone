@@ -5,11 +5,9 @@ import {
   isPrimitive,
   renderToDom,
   updateExistingDom,
-  updatePropsAndChildren,
 } from './renderer';
 import { getCurrentInstance, setCurrentInstance, resetHooks } from './hooks';
 import { Child, isVNode, VNode } from './vnode';
-import { applyProps } from './applyProps';
 
 let isScheduled = false;
 const updateQueue: Set<ComponentInstance> = new Set();
