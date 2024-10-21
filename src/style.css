@@ -36,7 +36,7 @@ h1 {
 }
 
 #app {
-  max-width: 1280px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -63,6 +63,20 @@ h1 {
   color: #888;
 }
 
+form {
+  padding: 2rem;
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+select {
+  height: 2rem;
+  padding-block: 1px;
+  padding-inline: 2px;
+}
+
+input {
+  height: 1.5rem;
+}
 button {
   border-radius: 8px;
   border: 1px solid transparent;
@@ -101,41 +115,65 @@ button:focus-visible {
 
 .life-expectancy-form {
   font-family: Arial, sans-serif;
-  padding: 20px;
-}
-
-label {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 10px;
-}
-
-button {
-  margin-top: 10px;
 }
 
 .visual-representation {
   margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .dots-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
+  gap: 3px;
   margin-top: 10px;
+  max-width: 730px;
 }
 
 .dot {
-  width: 5px;
-  height: 5px;
-  background-color: rgb(207, 225, 92);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
 }
 
-.dot.lived {
-  background-color: rgb(9, 9, 9);
+.month-dot,
+.week-dot {
+  background-color: white;
+}
+
+.green-dot.lived {
+  background-color: rgb(147, 148, 70);
+}
+
+.blue-dot.lived {
+  background-color: blue;
 }
 
 input[type='number' i] {
   max-width: 3rem;
+}
+
+.input-fields {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.input-field {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 500px) {
+  .input-field {
+    flex-direction: column;
+  }
+
+  .input-fields {
+    justify-content: center;
+  }
 }

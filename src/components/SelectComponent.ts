@@ -1,30 +1,29 @@
-// src/components/SelectComponent.ts
-import { useState } from '../virtual-dom/hooks';
 import { template } from '../virtual-dom/template';
 
-const SelectComponent = () => {
-  // Initialize state to keep track of the selected option
-  const [selectedOption, setSelectedOption] = useState('');
-  console.log('SelectComponent rerendered');
+interface SelectComponentProps {
+  country: string;
+  handleCountryChange: (e: Event) => void;
+  lifeExpectancyData: { [key: string]: number };
+}
 
-  // Event handler for when the selection changes
-  const handleChange = (e: Event) => {
-    const target = e.target as HTMLSelectElement;
-    setSelectedOption(target.value);
-    console.log('Selected Option:', target.value); // For testing purposes
-  };
-
+const SelectComponent = ({
+  country,
+  handleCountryChange,
+  lifeExpectancyData,
+}: SelectComponentProps) => {
   return template`
-    <div class="select-container">
-      <label for="test-select">Choose an option:</label>
-      <select id="test-select" value=${selectedOption} onChange=${handleChange}>
-        <option value="">--Select an option--</option>
-        <option value="Option1">Option 1</option>
-        <option value="Option2">Option 2</option>
-        <option value="Option3">Option 3</option>
-      </select>
-      <p>Currently Selected: ${selectedOption || 'None'}</p>
-    </div>
+    <section class="input-field">
+        <label>
+          Select your country
+        </label>
+          <select value=${country} onChange=${handleCountryChange}>
+            <option value="">---</option>
+            ${Object.keys(lifeExpectancyData).map(
+              (country) =>
+                template`<option value="${country}">${country}</option>`,
+            )}
+          </select>
+    </section>
   `;
 };
 

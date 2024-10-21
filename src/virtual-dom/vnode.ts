@@ -1,8 +1,16 @@
 // src/virtual-dom/vnode.ts
 
-export type ComponentFunction = (props?: any) => VNode;
+import { RenderableVNode } from './template';
 
-export type Child = VNode | string | number | boolean | ComponentFunction;
+export type ComponentFunction = (props?: any) => VNode | RenderableVNode;
+
+export type Child =
+  | RenderableVNode
+  | Node
+  | string
+  | number
+  | boolean
+  | ComponentFunction;
 
 export interface VNode {
   type: string;

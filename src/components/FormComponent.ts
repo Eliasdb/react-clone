@@ -1,8 +1,10 @@
-// src/components/LifeExpectancyFormComponent.ts
-
 import { useState } from '../virtual-dom/hooks';
 import { template } from '../virtual-dom/template';
 import { lifeExpectancyData } from '../data/data'; // Import the data
+import Input from './InputComponent';
+import { withProps } from '../virtual-dom/helpers';
+import SelectComponent from './SelectComponent';
+import DotsContainer from './DotsContainer';
 
 const LifeExpectancyFormComponent = () => {
   console.log('rerender');
@@ -20,7 +22,6 @@ const LifeExpectancyFormComponent = () => {
     const target = e.target as HTMLSelectElement;
     setCountry(target.value);
   };
-
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
     if (!country) {
@@ -36,30 +37,38 @@ const LifeExpectancyFormComponent = () => {
     setLifeExpectancy(fetchedLifeExpectancy);
 
     const currentAge = parseInt(age, 10);
-    const totalDays = fetchedLifeExpectancy * 365;
-    const daysLived = currentAge * 365;
-    setDaysLeft(totalDays - daysLived);
+
+    // Use 365.25 to account for leap years, without rounding here
+    const totalDays = fetchedLifeExpectancy * 365.25;
+    const daysLived = currentAge * 365.25;
+    const remainingDays = totalDays - daysLived;
+
+    setDaysLeft(Math.floor(remainingDays));
+  };
+
+  const inputProps = {
+    age,
+    handleAgeInput,
+  };
+
+  const selectProps = {
+    country,
+    handleCountryChange,
+    lifeExpectancyData,
   };
 
   return template`
-    <div class="life-expectancy-form">
+  <section>
+    <section class="life-expectancy-form">
       <form onSubmit=${handleSubmit}>
-        <label>
-          Enter your age:
-          <input type="number" value=${age} placeholder="Age" onInput=${handleAgeInput} />
-        </label>
-        <label>
-          Select your country:
-          <select value=${country} onChange=${handleCountryChange}>
-            <option value="">--Select a country--</option>
-            ${Object.keys(lifeExpectancyData).map(
-              (country) =>
-                template`<option value="${country}">${country}</option>`,
-            )}
-          </select>
-        </label>
-        <button type="submit">Calculate</button>
+        <section class="input-fields">
+          ${withProps(Input, inputProps)}
+          ${withProps(SelectComponent, selectProps)}
+          <button type="submit">Calculate</button>
+        </section>
       </form>
+    </section>
+    <div>
       ${
         daysLeft !== null && lifeExpectancy !== null
           ? template`
@@ -67,36 +76,38 @@ const LifeExpectancyFormComponent = () => {
               <p>
                 ${'You have ' + daysLeft + ' days left to live, based on the average life expectancy in ' + country + ' (' + lifeExpectancy + ' years).'}
               </p>
-            
-              <div class="dots-container">
-                <p>Months Lived:</p>
-                ${Array.from({ length: lifeExpectancy * 12 }).map(
-                  (_, index) =>
-                    template`<span class="dot ${index < Math.floor(lifeExpectancy * 12 - daysLeft / 30.44) ? 'lived' : ''}"></span>`,
-                )}
-              </div>
+              
+              <!-- Months lived section -->
+              ${withProps(DotsContainer, {
+                length: lifeExpectancy * 12,
+                livedUnits: Math.floor(lifeExpectancy * 12 - daysLeft / 30.44),
+                label: 'Months ',
+                dotClass: 'month-dot', // Specify class for month dots
+                livedDotsColour: 'green-dot',
+              })}
               <p>
-                ${
-                  'This is approximately ' +
-                  Math.floor(daysLeft / 7) +
-                  ' weeks left to live.'
-                }
-              </p></div>
-       <div class="dots-container">
-                <p>Weeks Lived:</p>
-                ${Array.from({ length: lifeExpectancy * 52 }).map(
-                  (_, index) =>
-                    template`<span class="dot ${index < Math.floor(lifeExpectancy * 52 - daysLeft / 7) ? 'lived' : ''}"></span>`,
-                )}
-              </div>
+                ${'This is approximately ' + Math.floor(daysLeft / 30.44) + ' months left to live.'}
+              </p>
+
+              <!-- Weeks lived section -->
+              ${withProps(DotsContainer, {
+                length: lifeExpectancy * 52,
+                livedUnits: Math.floor(lifeExpectancy * 52 - daysLeft / 7),
+                label: 'Weeks ',
+                dotClass: 'week-dot',
+                livedDotsColour: 'blue-dot',
+              })}
+                
+              <p>
+                ${'This is approximately ' + Math.floor(daysLeft / 7) + ' weeks left to live.'}
+              </p>
             </div>
           `
           : ''
       }
-      
-      
     </div>
-  `;
+  </section>
+`;
 };
 
 export default LifeExpectancyFormComponent;
