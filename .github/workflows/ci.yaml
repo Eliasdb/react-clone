@@ -13,25 +13,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: npm install
 
-      # Step 4: Run TypeScript checks
       - name: TypeScript Check
         run: npx tsc --noEmit
 
-      # Step 5: Run tests
       - name: Run tests
         run: npm test
 
@@ -54,7 +49,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1 # Replace with your AWS region
+          aws-region: us-west-2 # Replace with your AWS region
 
       # Step 4: Build Docker image
       - name: Build Docker image
@@ -64,7 +59,14 @@ jobs:
       - name: Tag Docker image
         run: docker tag vite-demo-app:latest vite-demo-app
 
-      # Step 6: Push Docker image to AWS Lightsail
+      # Step 6: Install Lightsail plugin
+      - name: Install Lightsail plugin
+        run: |
+          curl "https://s3.amazonaws.com/amazonlightsail-us-east-1/amazon-lightsail-cli/lightsailctl-linux-amd64/latest" -o lightsailctl
+          chmod +x lightsailctl
+          sudo mv lightsailctl /usr/local/bin/
+
+      # Step 7: Push Docker image to AWS Lightsail
       - name: Push Docker image to AWS Lightsail
         run: |
           aws lightsail push-container-image --service-name my-vite-app --label vite-demo-app --image vite-demo-app:latest
