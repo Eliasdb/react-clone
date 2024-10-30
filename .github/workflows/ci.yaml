@@ -51,10 +51,8 @@ jobs:
       - name: Build Docker image
         run: docker build -t vite-demo-app .
 
-      - name: Tag Docker image with unique tag
-        run: |
-          IMAGE_TAG=latest-${{ github.sha }}
-          docker tag vite-demo-app:latest vite-demo-app:${IMAGE_TAG}
+      - name: Tag Docker image with 'latest' tag
+        run: docker tag vite-demo-app:latest vite-demo-app:latest
 
       - name: Install Lightsail plugin
         run: |
@@ -64,4 +62,4 @@ jobs:
 
       - name: Push Docker image to AWS Lightsail
         run: |
-          aws lightsail push-container-image --region eu-west-2 --service-name react-clone --label vite-demo-app --image vite-demo-app:${IMAGE_TAG}
+          aws lightsail push-container-image --region eu-west-2 --service-name react-clone --label vite-demo-app --image vite-demo-app:latest
