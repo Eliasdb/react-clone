@@ -49,15 +49,17 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-3 # Replace with your AWS region
+          aws-region: eu-west-2 # Replace with your AWS region
 
       # Step 4: Build Docker image
       - name: Build Docker image
         run: docker build -t vite-demo-app .
 
-      # Step 5: Tag Docker image
+      # Step 5: Tag Docker image with unique tag
       - name: Tag Docker image
-        run: docker tag vite-demo-app:latest vite-demo-app
+        run: |
+          IMAGE_TAG=latest-${{ github.sha }}
+          docker tag vite-demo-app:latest vite-demo-app:${IMAGE_TAG}
 
       # Step 6: Install Lightsail plugin
       - name: Install Lightsail plugin
@@ -66,7 +68,7 @@ jobs:
           chmod +x lightsailctl
           sudo mv lightsailctl /usr/local/bin/
 
-      # Step 7: Push Docker image to AWS Lightsail
+      # Step 7: Push Docker image to AWS Lightsail with tag
       - name: Push Docker image to AWS Lightsail
         run: |
-          aws lightsail push-container-image --service-name my-vite-app --label vite-demo-app --image vite-demo-app:latest
+          aws lightsail push-container-image --service-name my-vite-app --label vite-demo-app --image vite-demo-app:${IMAGE_TAG}
