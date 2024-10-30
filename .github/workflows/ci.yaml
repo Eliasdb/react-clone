@@ -72,3 +72,7 @@ jobs:
       - name: Push Docker image to AWS Lightsail
         run: |
           aws lightsail push-container-image --region eu-west-2 --service-name my-vite-app --label vite-demo-app --image vite-demo-app:${IMAGE_TAG}
+
+      - name: Deploy Container Service in Lightsail
+        run: |
+          aws lightsail update-container-service --service-name my-vite-app --region eu-west-2 --public-endpoint '{"containerName":"vite-demo-app","containerPort":9900,"healthCheck":{"path":"/","intervalSeconds":5,"timeoutSeconds":2,"healthyThreshold":2,"unhealthyThreshold":2}}'
