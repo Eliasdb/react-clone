@@ -40,6 +40,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          install: true
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -48,22 +50,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
 
-      - name: Build Docker image
-        run: docker buildx --platform linux/amd64 -t vite-demo-app .
-
-      - name: Tag Docker image with 'latest' tag
-        run: docker tag vite-demo-app:latest vite-demo-app:latest
+      - name: Build Docker image for x86_64 architecture
+        run: |
+          docker buildx build --platform linux/amd64 -t vite-demo-app:latest --load .
 
       - name: Install Lightsail plugin
         run: |
+          echo "Installing Lightsail plugin..."
           curl "https://s3.amazonaws.com/amazonlightsail-us-east-1/amazon-lightsail-cli/lightsailctl-linux-amd64/latest" -o lightsailctl
           chmod +x lightsailctl
           sudo mv lightsailctl /usr/local/bin/
+          echo "Lightsail plugin installed successfully."
 
       - name: Push Docker image to AWS Lightsail
         run: |
+          echo "Pushing Docker image to AWS Lightsail..."
           aws lightsail push-container-image --region eu-west-2 --service-name react-clone --label vite-demo-app --image vite-demo-app:latest
+          echo "Image push complete."
 
       - name: Verify Image Push in Lightsail
         run: |
+          echo "Verifying if image has been registered in Lightsail..."
           aws lightsail get-container-services --service-name react-clone --region eu-west-2 --output json
