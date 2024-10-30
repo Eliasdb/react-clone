@@ -62,4 +62,9 @@ jobs:
 
       - name: Push Docker image to AWS Lightsail
         run: |
+          set -x  # Enable verbose output
           aws lightsail push-container-image --region eu-west-2 --service-name react-clone --label vite-demo-app --image vite-demo-app:latest
+          set +x  # Disable verbose output
+      - name: Verify Image Push in Lightsail
+        run: |
+          aws lightsail get-container-services --service-name react-clone --region eu-west-2 --query "containerServices[0].currentDeployment.containers" --output json
