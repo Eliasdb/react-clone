@@ -1,4 +1,3 @@
-
 # Stage 1: Build
 FROM node:18-alpine AS build
 
@@ -9,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
@@ -28,7 +27,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # Install a simple static file server (such as serve) to serve the build
 RUN npm install -g serve
