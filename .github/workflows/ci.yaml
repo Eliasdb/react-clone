@@ -49,7 +49,7 @@ jobs:
           aws-region: eu-west-2
 
       - name: Build Docker image
-        run: docker build -t vite-demo-app .
+        run: docker buildx --platform linux/amd64 -t vite-demo-app .
 
       - name: Tag Docker image with 'latest' tag
         run: docker tag vite-demo-app:latest vite-demo-app:latest
@@ -62,9 +62,8 @@ jobs:
 
       - name: Push Docker image to AWS Lightsail
         run: |
-          set -x  # Enable verbose output
           aws lightsail push-container-image --region eu-west-2 --service-name react-clone --label vite-demo-app --image vite-demo-app:latest
-          set +x  # Disable verbose output
+
       - name: Verify Image Push in Lightsail
         run: |
-          aws lightsail get-container-services --service-name react-clone --region eu-west-2 --query "containerServices[0].currentDeployment.containers" --output json
+          aws lightsail get-container-services --service-name react-clone --region eu-west-2 --output json
