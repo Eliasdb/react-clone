@@ -75,4 +75,4 @@ jobs:
 
       - name: Deploy Container Service in Lightsail
         run: |
-          aws lightsail update-container-service --service-name my-vite-app --region eu-west-2 --public-endpoint '{\"containerName\":\"vite-demo-app\",\"containerPort\":9900,\"healthCheck\":{\"path\":\"/\",\"intervalSeconds\":5,\"timeoutSeconds\":2,\"healthyThreshold\":2,\"unhealthyThreshold\":2}}'
+          aws lightsail update-container-service --service-name my-vite-app --region eu-west-2 --deployment '{"containers": {"vite-demo-app": {"image": "vite-demo-app:latest","ports": {"9900": "HTTP"}}},"publicEndpoint": {"containerName": "vite-demo-app","containerPort": 9900}}'
