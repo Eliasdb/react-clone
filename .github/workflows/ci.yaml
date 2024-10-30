@@ -71,4 +71,4 @@ jobs:
       # Step 7: Push Docker image to AWS Lightsail with tag
       - name: Push Docker image to AWS Lightsail
         run: |
-          aws lightsail push-container-image --service-name my-vite-app --label vite-demo-app --image vite-demo-app:${IMAGE_TAG}
+          aws lightsail push-container-image --region eu-west-2 --service-name my-vite-app --label vite-demo-app --image vite-demo-app:${IMAGE_TAG}
