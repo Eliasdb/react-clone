@@ -35,44 +35,33 @@ jobs:
     needs: build-and-test
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 3: Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2 # Replace with your AWS region
+          aws-region: eu-west-2
 
-      # Step 4: Build Docker image
       - name: Build Docker image
         run: docker build -t vite-demo-app .
 
-      # Step 5: Tag Docker image with unique tag
-      - name: Tag Docker image
+      - name: Tag Docker image with unique tag
         run: |
           IMAGE_TAG=latest-${{ github.sha }}
           docker tag vite-demo-app:latest vite-demo-app:${IMAGE_TAG}
 
-      # Step 6: Install Lightsail plugin
       - name: Install Lightsail plugin
         run: |
           curl "https://s3.amazonaws.com/amazonlightsail-us-east-1/amazon-lightsail-cli/lightsailctl-linux-amd64/latest" -o lightsailctl
           chmod +x lightsailctl
           sudo mv lightsailctl /usr/local/bin/
 
-      # Step 7: Push Docker image to AWS Lightsail with tag
       - name: Push Docker image to AWS Lightsail
         run: |
           aws lightsail push-container-image --region eu-west-2 --service-name my-vite-app --label vite-demo-app --image vite-demo-app:${IMAGE_TAG}
-
-      - name: Deploy Container Service in Lightsail
-        run: |
-          aws lightsail update-container-service --service-name my-vite-app --region eu-west-2 --deployment '{"containers": {"vite-demo-app": {"image": "vite-demo-app:latest","ports": {"9900": "HTTP"}}},"publicEndpoint": {"containerName": "vite-demo-app","containerPort": 9900}}'
