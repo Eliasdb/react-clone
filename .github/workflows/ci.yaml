@@ -54,6 +54,18 @@ jobs:
         run: |
           docker buildx build --platform linux/amd64 -t vite-demo-app:latest --load .
 
+      # Login to ECR
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 418295707434.dkr.ecr.eu-west-2.amazonaws.com
+
+      # Tag and push image to Amazon ECR
+      - name: Tag and push image to Amazon ECR
+        run: |
+          docker tag vite-demo-app:latest 418295707434.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest
+          docker push 418295707434.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest
+
+      # Install Lightsail plugin
       - name: Install Lightsail plugin
         run: |
           echo "Installing Lightsail plugin..."
@@ -62,13 +74,19 @@ jobs:
           sudo mv lightsailctl /usr/local/bin/
           echo "Lightsail plugin installed successfully."
 
-      - name: Push Docker image to AWS Lightsail
+      # Deploy image from ECR to Lightsail
+      - name: Deploy to AWS Lightsail from ECR
         run: |
-          echo "Pushing Docker image to AWS Lightsail..."
-          aws lightsail push-container-image --region eu-west-2 --service-name react-clone --label vite-demo-app --image vite-demo-app:latest
-          echo "Image push complete."
-
-      - name: Verify Image Push in Lightsail
-        run: |
-          echo "Verifying if image has been registered in Lightsail..."
-          aws lightsail get-container-services --service-name react-clone --region eu-west-2 --output json
+          echo "Deploying to Lightsail from ECR..."
+          aws lightsail create-container-service-deployment --service-name react-clone --region eu-west-2 --containers '{
+              "vite-demo-app": {
+                "image": "418295707434.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest",
+                "ports": {
+                  "9900": "HTTP"
+                }
+              }
+            }' --public-endpoint '{
+              "containerName": "vite-demo-app",
+              "containerPort": 9900
+            }'
+          echo "Deployment to Lightsail complete."
