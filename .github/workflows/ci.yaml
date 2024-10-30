@@ -57,13 +57,13 @@ jobs:
       # Login to ECR
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 418295707434.dkr.ecr.eu-west-2.amazonaws.com
+          aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_USER_ID }}.dkr.ecr.eu-west-2.amazonaws.com
 
       # Tag and push image to Amazon ECR
       - name: Tag and push image to Amazon ECR
         run: |
-          docker tag vite-demo-app:latest 418295707434.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest
-          docker push 418295707434.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest
+          docker tag vite-demo-app:latest ${{ secrets.AWS_USER_ID }}.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest
+          docker push ${{ secrets.AWS_USER_ID }}.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest
 
       # Install Lightsail plugin
       - name: Install Lightsail plugin
@@ -80,7 +80,7 @@ jobs:
           echo "Deploying to Lightsail from ECR..."
           aws lightsail create-container-service-deployment --service-name react-clone --region eu-west-2 --containers '{
               "vite-demo-app": {
-                "image": "418295707434.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest",
+                "image": "${{ secrets.AWS_USER_ID }}.dkr.ecr.eu-west-2.amazonaws.com/react-clone:latest",
                 "ports": {
                   "9900": "HTTP"
                 }
