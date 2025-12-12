@@ -17,7 +17,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.3",
-    "vite": "^5.4.21"
+    "vite": "^7.2.7"
   },
   "dependencies": {
     "@types/react": "^18.3.11",
